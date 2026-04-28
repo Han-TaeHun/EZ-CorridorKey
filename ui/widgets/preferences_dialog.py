@@ -103,13 +103,13 @@ def get_setting_str(key: str, default: str) -> str:
 
 
 def get_tracker_model_cache_dir() -> Path:
-    """Return the local Hugging Face cache directory used for SAM2 models."""
+    """Return the local cache directory used for SAM2 models."""
     try:
-        from huggingface_hub.constants import HF_HUB_CACHE
+        from sam2_tracker.paths import get_sam2_cache_dir
 
-        return Path(HF_HUB_CACHE)
-    except Exception:
-        return Path.home() / ".cache" / "huggingface" / "hub"
+        return get_sam2_cache_dir()
+    except ImportError:
+        return Path(__file__).resolve().parents[2] / "sam2_tracker" / "checkpoints"
 
 
 def get_local_ffmpeg_dir() -> Path:

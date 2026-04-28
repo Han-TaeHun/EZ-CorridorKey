@@ -149,6 +149,7 @@ class SAM2Tracker:
         try:
             from huggingface_hub import hf_hub_download
             from sam2.build_sam import HF_MODEL_ID_TO_FILENAMES, build_sam2_video_predictor
+            from .paths import get_sam2_cache_dir
         except ImportError as exc:
             raise SAM2NotInstalledError(
                 "SAM2 is not installed. Install the optional tracker dependency "
@@ -185,9 +186,12 @@ class SAM2Tracker:
         config_name, checkpoint_name = HF_MODEL_ID_TO_FILENAMES[self.model_id]
         if on_status:
             on_status("Checking model cache")
+        cache_dir = get_sam2_cache_dir()
+        cache_dir.mkdir(parents=True, exist_ok=True)
         ckpt_path = hf_hub_download(
             repo_id=self.model_id,
             filename=checkpoint_name,
+            cache_dir=str(cache_dir),
             tqdm_class=self._make_download_progress_class(
                 on_progress=on_progress,
                 on_status=on_status,

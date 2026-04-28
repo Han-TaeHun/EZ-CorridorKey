@@ -68,21 +68,6 @@ def _checkpoint_dir() -> Path:
     return _data_root() / "CorridorKeyModule" / "checkpoints"
 
 
-def _hf_hub_cache_dir() -> Path:
-    """Hugging Face hub cache location, respecting HF_HOME / HF_HUB_CACHE env vars.
-
-    SAM2 checkpoints are downloaded into this shared cache regardless of the
-    user's chosen install path, so the wizard detects them here — same location
-    across fresh installs, reinstalls, and folder changes.
-    """
-    override = os.environ.get("HF_HUB_CACHE")
-    if override:
-        return Path(override)
-    hf_home = os.environ.get("HF_HOME")
-    if hf_home:
-        return Path(hf_home) / "hub"
-    return Path.home() / ".cache" / "huggingface" / "hub"
-
 
 def _saved_install_path() -> Path:
     """Return the user's last-saved install path, falling back to default."""
@@ -129,7 +114,6 @@ def detect_installed_models(install_path: Path | None = None) -> dict[str, bool]
     path change would see stale paths.
     """
     root = Path(install_path) if install_path else _saved_install_path()
-    hf = _hf_hub_cache_dir()
 
     results: dict[str, bool] = {}
 
@@ -145,8 +129,12 @@ def detect_installed_models(install_path: Path | None = None) -> dict[str, bool]
         ck_dir / "corridorkey_mlx.safetensors"
     ).is_file()
 
-    # SAM2 Base+ — HF hub cache (shared across installs)
-    results["sam2"] = _hf_cache_has("facebook/sam2.1-hiera-base-plus", hf)
+    # SAM2 Base+ — project-local cache
+    try:
+        from sam2_tracker.paths import get_sam2_cache_dir
+        results["sam2"] = _hf_cache_has("facebook/sam2.1-hiera-base-plus", get_sam2_cache_dir())
+    except ImportError:
+        results["sam2"] = False
 
     # GVM — unet safetensors
     results["gvm"] = (

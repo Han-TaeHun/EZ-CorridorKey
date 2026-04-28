@@ -61,7 +61,7 @@ def _data_root() -> Path:
 
 
 PROJECT_ROOT = _data_root()
-HF_CACHE_DIR = Path.home() / ".cache" / "huggingface" / "hub"
+SAM2_CACHE_DIR = PROJECT_ROOT / "sam2_tracker" / "checkpoints"
 
 # MLX checkpoint served from GitHub Releases (not HuggingFace)
 MLX_CHECKPOINT = {
@@ -192,7 +192,7 @@ def is_sam2_installed(name: str) -> bool:
     cached = try_to_load_from_cache(
         repo_id=cfg["repo_id"],
         filename=cfg["filename"],
-        cache_dir=HF_CACHE_DIR,
+        cache_dir=SAM2_CACHE_DIR,
     )
     return isinstance(cached, str) and cached != _CACHED_NO_EXIST and os.path.isfile(cached)
 
@@ -298,18 +298,18 @@ def download_corridorkey_mlx() -> bool:
 
 
 def download_sam2(name: str) -> bool:
-    """Download a SAM2 checkpoint into the shared Hugging Face cache."""
+    """Download a SAM2 checkpoint into the project-local cache."""
     from huggingface_hub import hf_hub_download
 
     cfg = SAM2_MODELS[name]
-    HF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    SAM2_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
     print(f"  Downloading SAM2 {name} checkpoint ({cfg['size_human']})...")
     try:
         downloaded = hf_hub_download(
             repo_id=cfg["repo_id"],
             filename=cfg["filename"],
-            cache_dir=HF_CACHE_DIR,
+            cache_dir=SAM2_CACHE_DIR,
         )
         print(f"  Saved to cache: {downloaded}")
         return True
@@ -400,8 +400,8 @@ def download_sam2_model(name: str) -> bool:
         print(f"  [OK] sam2-{name} checkpoint already cached")
         return True
 
-    if not check_disk_space(cfg["size_bytes"], HF_CACHE_DIR):
-        usage = shutil.disk_usage(HF_CACHE_DIR)
+    if not check_disk_space(cfg["size_bytes"], SAM2_CACHE_DIR):
+        usage = shutil.disk_usage(SAM2_CACHE_DIR)
         free_gb = usage.free / (1024**3)
         print(f"  [ERROR] Not enough disk space for SAM2 {name} ({cfg['size_human']})")
         print(f"  Available: {free_gb:.1f} GB")
@@ -554,7 +554,7 @@ def check_all():
     tracker_mark = "[OK]" if tracker_installed else "[--]"
     tracker_status = "INSTALLED" if tracker_installed else "NOT INSTALLED"
     print(f"  {tracker_mark} sam2-tracker  python pkg   {tracker_status} (optional)")
-    print(f"       -> cache: {HF_CACHE_DIR}")
+    print(f"       -> cache: {SAM2_CACHE_DIR}")
     for name, cfg in SAM2_MODELS.items():
         installed = is_sam2_installed(name)
         status = "CACHED" if installed else "NOT CACHED"
