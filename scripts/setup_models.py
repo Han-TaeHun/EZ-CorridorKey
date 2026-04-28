@@ -184,17 +184,9 @@ def is_installed(name: str) -> bool:
 
 
 def is_sam2_installed(name: str) -> bool:
-    """Check whether a SAM2 checkpoint is present in the HF cache."""
-    from huggingface_hub import try_to_load_from_cache
-    from huggingface_hub.file_download import _CACHED_NO_EXIST
-
+    """Check whether a SAM2 checkpoint is present in the local cache."""
     cfg = SAM2_MODELS[name]
-    cached = try_to_load_from_cache(
-        repo_id=cfg["repo_id"],
-        filename=cfg["filename"],
-        cache_dir=SAM2_CACHE_DIR,
-    )
-    return isinstance(cached, str) and cached != _CACHED_NO_EXIST and os.path.isfile(cached)
+    return (SAM2_CACHE_DIR / cfg["filename"]).is_file()
 
 
 def check_disk_space(needed_bytes: int, path: Path) -> bool:
@@ -298,7 +290,7 @@ def download_corridorkey_mlx() -> bool:
 
 
 def download_sam2(name: str) -> bool:
-    """Download a SAM2 checkpoint into the project-local cache."""
+    """Download a SAM2 checkpoint directly into the project-local cache folder."""
     from huggingface_hub import hf_hub_download
 
     cfg = SAM2_MODELS[name]
@@ -309,9 +301,9 @@ def download_sam2(name: str) -> bool:
         downloaded = hf_hub_download(
             repo_id=cfg["repo_id"],
             filename=cfg["filename"],
-            cache_dir=SAM2_CACHE_DIR,
+            local_dir=str(SAM2_CACHE_DIR),
         )
-        print(f"  Saved to cache: {downloaded}")
+        print(f"  Saved to: {downloaded}")
         return True
     except Exception as e:
         print(f"  [ERROR] Download failed: {e}")

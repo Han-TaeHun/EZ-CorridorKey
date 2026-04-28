@@ -129,10 +129,10 @@ def detect_installed_models(install_path: Path | None = None) -> dict[str, bool]
         ck_dir / "corridorkey_mlx.safetensors"
     ).is_file()
 
-    # SAM2 Base+ — project-local cache
+    # SAM2 Base+ — project-local checkpoints folder
     try:
         from sam2_tracker.paths import get_sam2_cache_dir
-        results["sam2"] = _hf_cache_has("facebook/sam2.1-hiera-base-plus", get_sam2_cache_dir())
+        results["sam2"] = (get_sam2_cache_dir() / "sam2.1_hiera_base_plus.pt").is_file()
     except ImportError:
         results["sam2"] = False
 
@@ -163,28 +163,6 @@ def detect_installed_models(install_path: Path | None = None) -> dict[str, bool]
 
     return results
 
-
-def _hf_cache_has(repo_id: str, cache_dir: Path) -> bool:
-    """True when any snapshot for ``repo_id`` exists under the HF hub cache.
-
-    huggingface_hub stores repos as ``models--<org>--<name>/snapshots/<rev>/``.
-    We don't probe for a specific filename because users may have downloaded
-    different SAM2 variants (small / base-plus / large) and we just want to
-    know whether the shared cache already has a usable checkpoint.
-    """
-    try:
-        if not cache_dir.is_dir():
-            return False
-        repo_folder = "models--" + repo_id.replace("/", "--")
-        snapshots = cache_dir / repo_folder / "snapshots"
-        if not snapshots.is_dir():
-            return False
-        for snap in snapshots.iterdir():
-            if snap.is_dir() and any(snap.iterdir()):
-                return True
-    except OSError:
-        pass
-    return False
 
 
 # ---------------------------------------------------------------------------

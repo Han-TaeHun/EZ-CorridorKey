@@ -47,6 +47,7 @@ screenshot*.png
 # Checkpoint Directories
 sam2_tracker/checkpoints/*
 !sam2_tracker/checkpoints/.gitkeep
+sam2_tracker/checkpoints/.cache/
 modules/*/checkpoints/   # Model weights inside module directories
 CorridorKeyModule/checkpoints/*
 !CorridorKeyModule/checkpoints/.gitkeep
