@@ -107,11 +107,21 @@ if %errorlevel% neq 0 (
 echo [OK] 기존 가상환경 삭제 완료.
 
 :venv_create
-echo [INFO] 가상환경 생성 중: %VENV_DIR%
-"%PYTHON_EXE%" -m venv "%VENV_DIR%"
+echo [INFO] Python 버전 확인 중...
+"%PYTHON_EXE%" --version
 if %errorlevel% neq 0 (
     echo.
-    echo [ERROR] 가상환경 생성 실패 (errorlevel: %errorlevel%)
+    echo [ERROR] Python 실행 실패 (errorlevel: %errorlevel%)
+    goto :error
+)
+
+echo [INFO] 가상환경 생성 중: %VENV_DIR%
+"%PYTHON_EXE%" -m venv "%VENV_DIR%" 2>&1
+set VENV_ERR=%errorlevel%
+if %VENV_ERR% neq 0 (
+    echo.
+    echo [ERROR] 가상환경 생성 실패 (errorlevel: %VENV_ERR%)
+    echo [HINT] 위 python 오류 메시지를 확인해주세요.
     goto :error
 )
 echo [OK] 가상환경 생성 완료.
