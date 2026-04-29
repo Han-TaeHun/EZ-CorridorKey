@@ -7,5 +7,10 @@ if [ ! -d ".venv" ]; then
     exit 1
 fi
 
+# Cache torch.compile Triton kernels locally — prevents 2~5 min recompile each run
+export TORCHINDUCTOR_CACHE_DIR="${TORCHINDUCTOR_CACHE_DIR:-$HOME/.cache/EZ-CorridorKey/torch_cache}"
+# Cache Python bytecode locally — speeds up import on subsequent runs
+export PYTHONPYCACHEPREFIX="${PYTHONPYCACHEPREFIX:-$HOME/.cache/EZ-CorridorKey/pycache}"
+
 source .venv/bin/activate
 python main.py "$@"

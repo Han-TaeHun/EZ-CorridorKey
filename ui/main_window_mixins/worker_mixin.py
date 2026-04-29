@@ -45,8 +45,8 @@ class WorkerMixin:
         if current <= 0 or total <= 0:
             return
 
-        step = max(1, total // 50)
-        should_refresh = current <= 3 or current >= total or total <= 30 or current % step == 0
+        step = max(1, total // 5)
+        should_refresh = current == 1 or current >= total or total <= 10 or current % step == 0
         if not should_refresh:
             return
 
