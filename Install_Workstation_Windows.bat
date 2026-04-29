@@ -112,21 +112,30 @@ if not exist "C:\venvs" (
     )
 )
 
-REM 가상환경 기본 골격 생성 (아직 없을 때만)
-if not exist "%VENV_DIR%\Scripts\python.exe" (
-    echo [INFO] 가상환경 생성 중: %VENV_DIR%
-    "%PYTHON_EXE%" -m venv "%VENV_DIR%"
+REM 가상환경이 이미 있으면 삭제 후 재생성
+if exist "%VENV_DIR%" (
+    echo [INFO] 기존 가상환경 삭제 중: %VENV_DIR%
+    rmdir /s /q "%VENV_DIR%"
     if %errorlevel% neq 0 (
         echo.
-        echo [ERROR] 가상환경 생성 실패 (errorlevel: %errorlevel%)
+        echo [ERROR] 기존 가상환경 삭제 실패 (errorlevel: %errorlevel%)
         echo.
         pause
         exit /b 1
     )
-    echo [OK] 가상환경 생성 완료.
-) else (
-    echo [OK] 가상환경이 이미 존재합니다: %VENV_DIR%
+    echo [OK] 기존 가상환경 삭제 완료.
 )
+
+echo [INFO] 가상환경 생성 중: %VENV_DIR%
+"%PYTHON_EXE%" -m venv "%VENV_DIR%"
+if %errorlevel% neq 0 (
+    echo.
+    echo [ERROR] 가상환경 생성 실패 (errorlevel: %errorlevel%)
+    echo.
+    pause
+    exit /b 1
+)
+echo [OK] 가상환경 생성 완료.
 
 REM 원본 venv 경로 확인
 if not exist "%VENV_SOURCE%" (
