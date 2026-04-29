@@ -71,7 +71,6 @@ patches/
 .local-secrets/
 _BACKUPS/
 AGENTS.md
-CLAUDE.md
 *.lnk
 research-tests.md
 scripts/utils/
