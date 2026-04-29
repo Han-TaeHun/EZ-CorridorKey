@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 >nul
 setlocal enabledelayedexpansion
 title EZ-CorridorKey 워크스테이션 설치
 
