@@ -24,6 +24,22 @@ ruff format                           # auto-format (line length: 120)
 
 Logs are written to `logs/backend/YYMMDD_HHMMSS_corridorkey.log`.
 
+## Docs
+
+`docs/architecture.md` contains Mermaid diagrams for all major subsystems. Refer to it before touching cross-cutting concerns:
+
+| Diagram | What it shows |
+|---|---|
+| System Overview | Entry points → UI → Backend → Models |
+| CorridorKeyService mixins | Class composition and responsibilities |
+| Clip State Machine | FSM transitions and trigger conditions |
+| GPU Job Queue Flow | Sequence from UI submit to worker dispatch |
+| Model Residency & VRAM Policy | How model switching is gated |
+| UI MainWindow Mixin Structure | Which mixin owns which concern |
+| Frame Processing Pipeline | Per-frame inference stages |
+| Project On-Disk Layout | v1 vs v2 folder structures |
+| SAM2 Tracking Data Flow | Prompt → mask propagation |
+
 ## Architecture
 
 ### Service layer — mixin composition
