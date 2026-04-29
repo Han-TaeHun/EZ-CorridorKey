@@ -101,42 +101,6 @@ class SAM2Tracker:
         """Ensure the predictor is loaded and the checkpoint is present locally."""
         self._get_predictor(on_progress=on_progress, on_status=on_status)
 
-    def _make_download_progress_class(
-        self,
-        *,
-        on_progress: Callable[[int, int], None] | None = None,
-        on_status: Callable[[str], None] | None = None,
-    ):
-        class _DownloadProgress:
-            def __init__(self, *args, total=None, initial=0, desc="", disable=False, **kwargs):
-                self.total = int(total or 0)
-                self.n = int(initial or 0)
-                self.desc = desc or "SAM2 model"
-                if on_status:
-                    on_status(f"Downloading {self.desc}")
-                if on_progress and self.total > 0:
-                    on_progress(self.n, self.total)
-
-            def __enter__(self):
-                return self
-
-            def __exit__(self, exc_type, exc, tb):
-                self.close()
-                return False
-
-            def update(self, n=1):
-                self.n += int(n or 0)
-                if on_progress and self.total > 0:
-                    on_progress(min(self.n, self.total), self.total)
-
-            def close(self):
-                if on_progress and self.total > 0:
-                    on_progress(self.total, self.total)
-                if on_status:
-                    on_status(f"Downloaded {self.desc}")
-
-        return _DownloadProgress
-
     def _get_predictor(
         self,
         *,
@@ -147,7 +111,6 @@ class SAM2Tracker:
             return self._predictor
 
         try:
-            from huggingface_hub import hf_hub_download
             from sam2.build_sam import HF_MODEL_ID_TO_FILENAMES, build_sam2_video_predictor
             from .paths import get_sam2_cache_dir
         except ImportError as exc:
@@ -188,15 +151,14 @@ class SAM2Tracker:
             on_status("Checking model cache")
         local_dir = get_sam2_cache_dir()
         local_dir.mkdir(parents=True, exist_ok=True)
-        ckpt_path = hf_hub_download(
-            repo_id=self.model_id,
-            filename=checkpoint_name,
-            local_dir=str(local_dir),
-            tqdm_class=self._make_download_progress_class(
-                on_progress=on_progress,
-                on_status=on_status,
-            ),
-        )
+        ckpt_path = local_dir / checkpoint_name
+        if not ckpt_path.exists():
+            raise FileNotFoundError(
+                f"SAM2 checkpoint not found: {ckpt_path}\n"
+                f"Manually download '{checkpoint_name}' from "
+                f"https://huggingface.co/{self.model_id} "
+                f"and place it in: {local_dir}"
+            )
         self._predictor = build_sam2_video_predictor(
             config_file=config_name,
             ckpt_path=ckpt_path,
