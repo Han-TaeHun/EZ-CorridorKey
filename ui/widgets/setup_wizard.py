@@ -64,8 +64,31 @@ def _data_root() -> Path:
         return _default_install_dir()
 
 
+def _load_model_paths_module():
+    """Load backend/model_paths.py without importing the full backend package."""
+    script_path = _project_root() / "backend" / "model_paths.py"
+    if not script_path.is_file():
+        raise ImportError(f"model_paths.py not found at {script_path}")
+    spec = importlib.util.spec_from_file_location("backend.model_paths", str(script_path))
+    if not spec or not spec.loader:
+        raise ImportError(f"Cannot create import spec for {script_path}")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _checkpoints_root(install_path: Path | None = None) -> Path:
+    """Return the shared checkpoint root used by runtime and setup downloads."""
+    if install_path is not None:
+        return Path(install_path) / "checkpoints"
+    try:
+        return _load_model_paths_module().get_checkpoints_root()
+    except Exception:
+        return _data_root() / "checkpoints"
+
+
 def _checkpoint_dir() -> Path:
-    return _data_root() / "CorridorKeyModule" / "checkpoints"
+    return _checkpoints_root() / "corridorkey"
 
 
 
@@ -113,12 +136,12 @@ def detect_installed_models(install_path: Path | None = None) -> dict[str, bool]
     that module bakes ``PROJECT_ROOT`` at import time, so re-scanning after a
     path change would see stale paths.
     """
-    root = Path(install_path) if install_path else _saved_install_path()
+    root = _checkpoints_root(Path(install_path) if install_path else _saved_install_path())
 
     results: dict[str, bool] = {}
 
     # CorridorKey core .pth — any .pth in the checkpoints dir counts
-    ck_dir = root / "CorridorKeyModule" / "checkpoints"
+    ck_dir = root / "corridorkey"
     try:
         results["corridorkey"] = ck_dir.is_dir() and any(ck_dir.glob("*.pth"))
     except OSError:
@@ -130,24 +153,20 @@ def detect_installed_models(install_path: Path | None = None) -> dict[str, bool]
     ).is_file()
 
     # SAM2 Base+ — project-local checkpoints folder
-    try:
-        from sam2_tracker.paths import get_sam2_cache_dir
-        results["sam2"] = (get_sam2_cache_dir() / "sam2.1_hiera_base_plus.pt").is_file()
-    except ImportError:
-        results["sam2"] = False
+    results["sam2"] = (root / "sam2" / "sam2.1_hiera_base_plus.pt").is_file()
 
     # GVM — unet safetensors
     results["gvm"] = (
-        root / "gvm_core" / "weights" / "unet" / "diffusion_pytorch_model.safetensors"
+        root / "gvm" / "unet" / "diffusion_pytorch_model.safetensors"
     ).is_file()
 
     # MatAnyone2 — single .pth
     results["matanyone2"] = (
-        root / "modules" / "MatAnyone2Module" / "checkpoints" / "matanyone2.pth"
+        root / "matanyone2" / "matanyone2.pth"
     ).is_file()
 
     # BiRefNet default Matting variant — any .safetensors in the snapshot dir
-    brn_dir = root / "modules" / "BiRefNetModule" / "checkpoints" / "BiRefNet-matting"
+    brn_dir = root / "birefnet" / "BiRefNet-matting"
     try:
         results["birefnet"] = brn_dir.is_dir() and any(
             p.suffix == ".safetensors" for p in brn_dir.iterdir() if p.is_file()
@@ -156,7 +175,7 @@ def detect_installed_models(install_path: Path | None = None) -> dict[str, bool]
         results["birefnet"] = False
 
     # VideoMaMa — needs BOTH the VideoMaMa weights and the SVD base model
-    vm_root = root / "VideoMaMaInferenceModule" / "checkpoints"
+    vm_root = root / "videomama"
     vm_main = vm_root / "VideoMaMa" / "diffusion_pytorch_model.safetensors"
     vm_base = vm_root / "stable-video-diffusion-img2vid-xt" / "model_index.json"
     results["videomama"] = vm_main.is_file() and vm_base.is_file()
