@@ -37,6 +37,8 @@ class InferenceCore:
             device = get_default_device()
         self.device = device
         if isinstance(network, str):
+            if not os.path.isdir(network):
+                raise FileNotFoundError(f"MatAnyone2 model directory not found: {network}")
             network = MatAnyone2.from_pretrained(network)
         network.to(device)
         network.eval()

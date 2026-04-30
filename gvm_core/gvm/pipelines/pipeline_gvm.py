@@ -34,6 +34,10 @@ class GVMLoraLoader(StableDiffusionLoraLoaderMixin):
         **kwargs
     ):
 
+        if isinstance(pretrained_model_name_or_path_or_dict, str) and not os.path.isdir(
+            pretrained_model_name_or_path_or_dict
+        ):
+            raise FileNotFoundError(f"GVM LoRA directory not found: {pretrained_model_name_or_path_or_dict}")
         unet_lora_config = LoraConfig.from_pretrained(pretrained_model_name_or_path_or_dict)
         checkpoint = os.path.join(pretrained_model_name_or_path_or_dict, f"pytorch_lora_weights.pt")
         unet_lora_ckpt = torch.load(checkpoint, weights_only=True)

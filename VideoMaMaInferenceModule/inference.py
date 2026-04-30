@@ -39,10 +39,9 @@ def _candidate_checkpoint_dirs() -> List[str]:
     """
     dirs: List[str] = []
     try:
-        from backend.project import get_data_dir  # Lazy import: avoid cycles
-        data_dir = get_data_dir()
-        if data_dir:
-            dirs.append(os.path.join(data_dir, "VideoMaMaInferenceModule", "checkpoints"))
+        from backend import model_paths  # Lazy import: avoid cycles
+
+        dirs.append(str(model_paths.get_videomama_dir()))
     except Exception:
         pass
     if _BUNDLED_CHECKPOINT_DIR not in dirs:

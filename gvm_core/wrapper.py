@@ -29,22 +29,20 @@ _BUNDLED_WEIGHTS_DIR = osp.join(osp.dirname(__file__), "weights")
 def _resolve_gvm_weights_dir():
     """Return the first existing GVM weights directory, or None.
 
-    Checks ``<data_dir>/gvm_core/weights`` first (where ``setup_models.py``
-    writes in frozen builds), then falls back to the bundled directory
-    beside this file so existing manual installs keep working.
+    Checks the shared checkpoint root first, then falls back to the bundled
+    directory beside this file so existing manual installs keep working.
     """
     candidates = []
     try:
-        from backend.project import get_data_dir  # Lazy import: avoid cycles
-        data_dir = get_data_dir()
-        if data_dir:
-            candidates.append(osp.join(data_dir, "gvm_core", "weights"))
+        from backend import model_paths  # Lazy import: avoid cycles
+
+        candidates.append(str(model_paths.get_gvm_dir()))
     except Exception:
         pass
     if _BUNDLED_WEIGHTS_DIR not in candidates:
         candidates.append(_BUNDLED_WEIGHTS_DIR)
     for path in candidates:
-        if osp.isdir(path):
+        if osp.isfile(osp.join(path, "unet", "diffusion_pytorch_model.safetensors")):
             return path
     return None
 
@@ -88,14 +86,26 @@ class GVMProcessor:
                  seed=None):
         self.device = torch.device(device)
         
-        # Resolve default weights path from installed data dir first, then the
-        # bundled module dir, finally falling back to the HuggingFace repo ID.
+        # Resolve default weights path from the shared checkpoint dir first,
+        # then the bundled module dir. Runtime downloads are not allowed here.
         if model_base is None:
             local_weights = _resolve_gvm_weights_dir()
             if local_weights is not None:
                 model_base = local_weights
             else:
-                model_base = "geyongtao/gvm"
+                try:
+                    from backend import model_paths
+
+                    expected = model_paths.get_gvm_dir()
+                except Exception:
+                    expected = _BUNDLED_WEIGHTS_DIR
+                raise FileNotFoundError(
+                    f"GVM weights not found.\n"
+                    f"Expected: {expected}\n"
+                    f"Run `python -m scripts.setup_models --gvm` to download."
+                )
+        elif not osp.isdir(model_base):
+            raise FileNotFoundError(f"GVM weights directory not found: {model_base}")
             
         self.model_base = model_base
         self.unet_base = unet_base
@@ -124,6 +134,8 @@ class GVMProcessor:
                  # Often lora weights are just the unet weights in this codebase based on demo.py usage
                  pass 
             elif lora_base:
+                if not osp.isdir(lora_base):
+                    raise FileNotFoundError(f"GVM LoRA directory not found: {lora_base}")
                 self.pipe.load_lora_weights(lora_base)
                 
         self.pipe = self.pipe.to(self.device, dtype=torch.float16)

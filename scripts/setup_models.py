@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import glob
 import hashlib
+import importlib.util
 import os
 import platform
 import shutil
@@ -28,12 +29,29 @@ import urllib.request
 from pathlib import Path
 
 _SCRIPT_ROOT = Path(__file__).resolve().parent.parent
+if str(_SCRIPT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_SCRIPT_ROOT))
+
+
+def _load_model_paths_module():
+    spec = importlib.util.spec_from_file_location(
+        "backend.model_paths",
+        _SCRIPT_ROOT / "backend" / "model_paths.py",
+    )
+    if spec is None or spec.loader is None:
+        raise ImportError("Could not load backend/model_paths.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+model_paths = _load_model_paths_module()
 
 
 def _data_root() -> Path:
     """Writable root for model downloads.
 
-    In dev mode: project root (checkpoints live in CorridorKeyModule/checkpoints/).
+    In dev mode: project root (checkpoints live in checkpoints/).
     In frozen PyInstaller builds: delegates to backend.project.get_data_dir().
     Falls back to standalone logic when backend is not importable (script run directly).
     """
@@ -60,15 +78,14 @@ def _data_root() -> Path:
         return Path.home() / ".local" / "share" / "EZ-CorridorKey"
 
 
-PROJECT_ROOT = _data_root()
-SAM2_CACHE_DIR = PROJECT_ROOT / "sam2_tracker" / "checkpoints"
+SAM2_CACHE_DIR = model_paths.get_sam2_dir()
 
 # MLX checkpoint served from GitHub Releases (not HuggingFace)
 MLX_CHECKPOINT = {
     "url": "https://github.com/nikopueringer/corridorkey-mlx/releases/download/v1.0.0/corridorkey_mlx.safetensors",
     "sha256_url": "https://github.com/nikopueringer/corridorkey-mlx/releases/download/v1.0.0/corridorkey_mlx.safetensors.sha256",
     "filename": "corridorkey_mlx.safetensors",
-    "local_dir": PROJECT_ROOT / "CorridorKeyModule" / "checkpoints",
+    "local_dir": model_paths.get_corridorkey_dir(),
     "size_human": "380 MB",
     "size_bytes": 398_849_072,
 }
@@ -77,7 +94,7 @@ MODELS = {
     "corridorkey": {
         "repo_id": "nikopueringer/CorridorKey_v1.0",
         "filename": "CorridorKey_v1.0.pth",
-        "local_dir": PROJECT_ROOT / "CorridorKeyModule" / "checkpoints",
+        "local_dir": model_paths.get_corridorkey_dir(),
         "check_glob": "*.pth",
         "size_human": "383 MB",
         "size_bytes": 400_000_000,
@@ -85,7 +102,7 @@ MODELS = {
     },
     "gvm": {
         "repo_id": "geyongtao/gvm",
-        "local_dir": PROJECT_ROOT / "gvm_core" / "weights",
+        "local_dir": model_paths.get_gvm_dir(),
         "check_file": "unet/diffusion_pytorch_model.safetensors",
         "size_human": "~6 GB",
         "size_bytes": 6_500_000_000,
@@ -93,7 +110,7 @@ MODELS = {
     },
     "videomama": {
         "repo_id": "SammyLim/VideoMaMa",
-        "local_dir": PROJECT_ROOT / "VideoMaMaInferenceModule" / "checkpoints",
+        "local_dir": model_paths.get_videomama_dir(),
         "check_file": "VideoMaMa/diffusion_pytorch_model.safetensors",
         "size_human": "~37 GB",
         "size_bytes": 40_000_000_000,
@@ -109,22 +126,19 @@ MODELS = {
 MATANYONE2_CHECKPOINT = {
     "url": "https://github.com/pq-yang/MatAnyone2/releases/download/v1.0.0/matanyone2.pth",
     "filename": "matanyone2.pth",
-    "local_dir": PROJECT_ROOT / "modules" / "MatAnyone2Module" / "checkpoints",
+    "local_dir": model_paths.get_matanyone2_dir(),
     "size_human": "141 MB",
     "size_bytes": 141_429_115,
 }
 
 # BiRefNet: 16 model variants all live under ZhengPeng7/ on HuggingFace.
 # The setup wizard offers the default "Matting" variant as an optional
-# pre-download (~940 MB) so installed macOS users don't hit a lazy
-# write-to-.app-bundle path on first use. Users who skip this get the
-# same model lazy-downloaded at first BiRefNet click — the wrapper's
-# ``_resolve_model_dir`` routes that lazy download to the same writable
-# location, so cold starts still work without pre-selection.
+# pre-download (~940 MB). The runtime wrapper only loads local files and
+# reports a setup error when the checkpoint is missing.
 BIREFNET_DEFAULT_CHECKPOINT = {
     "repo_id": "ZhengPeng7/BiRefNet-matting",
     "repo_name": "BiRefNet-matting",
-    "local_dir": PROJECT_ROOT / "modules" / "BiRefNetModule" / "checkpoints" / "BiRefNet-matting",
+    "local_dir": model_paths.get_birefnet_dir() / "BiRefNet-matting",
     "size_human": "~940 MB",
     "size_bytes": 940_000_000,
 }
@@ -469,10 +483,8 @@ def is_birefnet_installed() -> bool:
 def download_birefnet() -> bool:
     """Download the default BiRefNet Matting variant to the data-dir path.
 
-    The wrapper's ``_resolve_model_dir`` will find this at first use and
-    skip the lazy runtime download entirely. Users who skip this during
-    setup get the same content lazy-downloaded on demand — this is
-    strictly a UX improvement for pre-selecting the default variant.
+    The runtime wrapper will find this at first use. If users skip this
+    during setup, BiRefNet reports a setup error instead of downloading.
     """
     cfg = BIREFNET_DEFAULT_CHECKPOINT
     local_dir = cfg["local_dir"]

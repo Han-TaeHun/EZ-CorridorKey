@@ -45,6 +45,11 @@ screenshot*.png
 *.onnx
 
 # Checkpoint Directories
+checkpoints/**
+!checkpoints/
+!checkpoints/.gitkeep
+!checkpoints/*/
+!checkpoints/*/.gitkeep
 sam2_tracker/checkpoints/*
 !sam2_tracker/checkpoints/.gitkeep
 sam2_tracker/checkpoints/.cache/

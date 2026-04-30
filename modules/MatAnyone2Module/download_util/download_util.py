@@ -1,6 +1,8 @@
 import math
 import os
 import requests
+# Deprecated: do not call this module from app runtime. scripts/setup_models.py
+# is the only supported download entry point for MatAnyone2 checkpoints.
 from torch.hub import download_url_to_file, get_dir
 from tqdm import tqdm
 from urllib.parse import urlparse

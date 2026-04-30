@@ -27,8 +27,6 @@ import torch
 
 logger = logging.getLogger(__name__)
 
-# Checkpoint URL for auto-download
-_CKPT_URL = "https://github.com/pq-yang/MatAnyone2/releases/download/v1.0.0/matanyone2.pth"
 _CKPT_NAME = "matanyone2.pth"
 
 _MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -55,14 +53,9 @@ def _candidate_checkpoint_dirs() -> List[str]:
     """
     dirs: List[str] = []
     try:
-        from backend.project import get_data_dir  # Lazy import: avoid cycles
-        data_dir = get_data_dir()
-        if data_dir:
-            dirs.append(
-                os.path.join(
-                    data_dir, "modules", "MatAnyone2Module", "checkpoints"
-                )
-            )
+        from backend import model_paths  # Lazy import: avoid cycles
+
+        dirs.append(str(model_paths.get_matanyone2_dir()))
     except Exception:
         pass
     if _BUNDLED_CHECKPOINT_DIR not in dirs:
@@ -76,7 +69,7 @@ def _candidate_checkpoint_dirs() -> List[str]:
 
 
 def _ensure_checkpoint(ckpt_path: str | None = None) -> str:
-    """Return path to matanyone2.pth, downloading if needed.
+    """Return path to matanyone2.pth.
 
     Resolution order:
         1. Explicit ``ckpt_path`` if provided and exists.
@@ -90,22 +83,19 @@ def _ensure_checkpoint(ckpt_path: str | None = None) -> str:
         return ckpt_path
 
     candidates = _candidate_checkpoint_dirs()
+    searched: List[str] = []
     for base in candidates:
         local_path = os.path.join(base, _CKPT_NAME)
+        searched.append(local_path)
         if os.path.isfile(local_path):
             return local_path
 
     # Nothing found — download to the writable data-dir target.
-    download_dir = candidates[0]
-    local_path = os.path.join(download_dir, _CKPT_NAME)
-    logger.info(
-        "MatAnyone2 checkpoint not found, downloading to %s", local_path
+    raise FileNotFoundError(
+        "MatAnyone2 checkpoint not found.\n"
+        "Expected one of:\n  " + "\n  ".join(searched) + "\n"
+        "Run `python -m scripts.setup_models --matanyone2` to download."
     )
-    os.makedirs(download_dir, exist_ok=True)
-    from torch.hub import download_url_to_file
-    download_url_to_file(_CKPT_URL, local_path)
-    logger.info(f"Downloaded checkpoint to {local_path}")
-    return local_path
 
 
 class MatAnyone2Processor:

@@ -20,23 +20,16 @@ from .inference_engine import INFERENCE_DEFAULTS as _D
 _BUNDLED_CHECKPOINT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "checkpoints")
 
 def _resolve_checkpoint_dir() -> str:
-    """Return the writable checkpoint directory.
-
-    In development mode (not frozen), this is CorridorKeyModule/checkpoints/.
-    In a frozen PyInstaller build, delegates to backend.project.get_data_dir()
-    for the user-chosen install path.
-    """
-    if not getattr(sys, "frozen", False):
-        return _BUNDLED_CHECKPOINT_DIR
+    """Return the primary checkpoint directory."""
     try:
-        from backend.project import get_data_dir
-        ckpt_dir = os.path.join(get_data_dir(), "CorridorKeyModule", "checkpoints")
-        os.makedirs(ckpt_dir, exist_ok=True)
-        return ckpt_dir
+        from backend import model_paths
+
+        return str(model_paths.get_corridorkey_dir())
     except ImportError:
         return _BUNDLED_CHECKPOINT_DIR
 
 CHECKPOINT_DIR = _resolve_checkpoint_dir()
+LEGACY_CHECKPOINT_DIR = _BUNDLED_CHECKPOINT_DIR
 TORCH_EXT = ".pth"
 MLX_EXT = ".safetensors"
 DEFAULT_IMG_SIZE = 2048
@@ -82,7 +75,7 @@ def _auto_detect_backend() -> str:
         logger.info("corridorkey_mlx not installed — using torch backend")
         return "torch"
 
-    safetensor_files = glob.glob(os.path.join(CHECKPOINT_DIR, f"*{MLX_EXT}"))
+    safetensor_files = _checkpoint_matches(MLX_EXT)
     if not safetensor_files:
         logger.info("No %s checkpoint found — using torch backend", MLX_EXT)
         return "torch"
@@ -111,22 +104,41 @@ def _discover_checkpoint(ext: str) -> Path:
     Raises FileNotFoundError (0 found) or ValueError (>1 found).
     Includes cross-reference hints when wrong extension files exist.
     """
-    matches = glob.glob(os.path.join(CHECKPOINT_DIR, f"*{ext}"))
+    matches = _checkpoint_matches(ext)
 
     if len(matches) == 0:
         other_ext = MLX_EXT if ext == TORCH_EXT else TORCH_EXT
-        other_files = glob.glob(os.path.join(CHECKPOINT_DIR, f"*{other_ext}"))
+        other_files = _checkpoint_matches(other_ext)
         hint = ""
         if other_files:
             other_backend = "mlx" if other_ext == MLX_EXT else "torch"
             hint = f" (Found {other_ext} files — did you mean CORRIDORKEY_BACKEND={other_backend}?)"
-        raise FileNotFoundError(f"No {ext} checkpoint found in {CHECKPOINT_DIR}.{hint}")
+        searched = "\n  ".join(_candidate_checkpoint_dirs())
+        raise FileNotFoundError(
+            f"No {ext} checkpoint found.\n"
+            f"Expected one of:\n  {searched}.{hint}\n"
+            f"Run `python -m scripts.setup_models --corridorkey` to download."
+        )
 
     if len(matches) > 1:
         names = [os.path.basename(f) for f in matches]
         raise ValueError(f"Multiple {ext} checkpoints in {CHECKPOINT_DIR}: {names}. Keep exactly one.")
 
     return Path(matches[0])
+
+
+def _candidate_checkpoint_dirs() -> list[str]:
+    dirs = [CHECKPOINT_DIR]
+    if LEGACY_CHECKPOINT_DIR not in dirs:
+        dirs.append(LEGACY_CHECKPOINT_DIR)
+    return dirs
+
+
+def _checkpoint_matches(ext: str) -> list[str]:
+    matches: list[str] = []
+    for directory in _candidate_checkpoint_dirs():
+        matches.extend(glob.glob(os.path.join(directory, f"*{ext}")))
+    return matches
 
 
 def _wrap_mlx_output(

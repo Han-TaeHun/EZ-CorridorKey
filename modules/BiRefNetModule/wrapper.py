@@ -1,7 +1,7 @@
 """BiRefNet wrapper — bilateral reference network for automatic alpha hint generation.
 
-Fully automatic (no painting/annotation required). Downloads the selected model
-variant from HuggingFace on first use and caches it locally.
+Fully automatic (no painting/annotation required). Model weights must already
+exist locally; use scripts/setup_models.py to download them.
 
 Usage:
     processor = BiRefNetProcessor(device='cuda', usage='Matting')
@@ -52,14 +52,9 @@ def _candidate_checkpoint_dirs() -> List[str]:
     """
     dirs: List[str] = []
     try:
-        from backend.project import get_data_dir  # Lazy import: avoid cycles
-        data_dir = get_data_dir()
-        if data_dir:
-            dirs.append(
-                os.path.join(
-                    data_dir, "modules", "BiRefNetModule", "checkpoints"
-                )
-            )
+        from backend import model_paths  # Lazy import: avoid cycles
+
+        dirs.append(str(model_paths.get_birefnet_dir()))
     except Exception:
         pass
     if _BUNDLED_CHECKPOINT_DIR not in dirs:
@@ -67,7 +62,7 @@ def _candidate_checkpoint_dirs() -> List[str]:
     return dirs
 
 
-def _resolve_model_dir(repo_name: str) -> Tuple[Optional[str], str]:
+def _resolve_model_dir(repo_name: str) -> Tuple[Optional[str], List[str]]:
     """Locate an already-downloaded BiRefNet variant.
 
     Returns ``(existing_dir_or_None, preferred_download_dir)``. The
@@ -76,15 +71,17 @@ def _resolve_model_dir(repo_name: str) -> Tuple[Optional[str], str]:
     read-only bundled path.
     """
     candidates = _candidate_checkpoint_dirs()
+    searched: List[str] = []
     for base in candidates:
         candidate = os.path.join(base, repo_name)
+        searched.append(candidate)
         if os.path.isdir(candidate) and any(
             f.endswith((".safetensors", ".bin"))
             for f in os.listdir(candidate)
             if os.path.isfile(os.path.join(candidate, f))
         ):
-            return candidate, os.path.join(candidates[0], repo_name)
-    return None, os.path.join(candidates[0], repo_name)
+            return candidate, searched
+    return None, searched
 
 # ── Model registry ──────────────────────────────────────────────────────────
 # Display name → HuggingFace repo suffix under ZhengPeng7/
@@ -177,24 +174,20 @@ class BiRefNetProcessor:
         # path — never the read-only bundled path, which is what caused
         # the "Permission denied" crash on installed macOS builds where
         # the module lives inside /Applications/*.app/Contents/...
-        existing, download_target = _resolve_model_dir(repo_name)
+        existing, searched = _resolve_model_dir(repo_name)
         if existing is not None:
             model_local_dir = existing
             logger.info(f"BiRefNet model cached: {model_local_dir}")
         else:
-            model_local_dir = download_target
-            if on_status:
-                on_status(f"Downloading {repo_name}...")
-            logger.info(
-                f"Downloading BiRefNet model: {repo_id} -> {model_local_dir}"
+            raise FileNotFoundError(
+                f"BiRefNet checkpoint not found.\n"
+                f"Expected one of:\n  " + "\n  ".join(searched) + "\n"
+                f"Run `python -m scripts.setup_models --birefnet` to download "
+                f"the default model, or place '{repo_id}' files in the matching folder."
             )
-            os.makedirs(model_local_dir, exist_ok=True)
-            from huggingface_hub import snapshot_download
-            snapshot_download(
-                repo_id=repo_id,
-                local_dir=model_local_dir,
-                local_dir_use_symlinks=False,
-            )
+
+        if not os.path.isdir(model_local_dir):
+            raise FileNotFoundError(f"BiRefNet model directory not found: {model_local_dir}")
 
         if on_status:
             on_status(f"Loading BiRefNet ({self._usage})...")
