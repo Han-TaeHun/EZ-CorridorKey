@@ -67,6 +67,7 @@ modules/BiRefNetModule/checkpoints/*
 
 # Dev docs (local only)
 dev-docs/
+plans/
 patches/
 
 # Dev tools (local only, not shipped)

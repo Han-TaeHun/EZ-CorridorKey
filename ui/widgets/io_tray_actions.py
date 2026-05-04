@@ -154,7 +154,9 @@ class IOTrayActionsMixin:
                 if subdirs:
                     for subdir in subdirs:
                         src = os.path.join(output_dir, subdir)
-                        action = QAction(f"Export {subdir} as Video...", self)
+                        is_seq = bool(clip.input_asset and clip.input_asset.asset_type == "sequence")
+                        label = f"Export {subdir} as Sequence..." if is_seq else f"Export {subdir} as Video..."
+                        action = QAction(label, self)
                         action.triggered.connect(
                             lambda checked=False, c=clip, s=src: self.export_video_requested.emit(c, s)
                         )

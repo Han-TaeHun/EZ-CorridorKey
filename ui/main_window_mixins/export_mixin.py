@@ -225,6 +225,43 @@ class ExportMixin:
                 QMessageBox.warning(self, "No Output", "No output frames found to export.")
                 return
 
+        # Default export to _EXPORTS in the clip's project folder
+        subdir_name = os.path.basename(source_dir)
+        exports_dir = os.path.join(clip.root_path, "_EXPORTS")
+        os.makedirs(exports_dir, exist_ok=True)
+
+        is_sequence_input = bool(clip.input_asset and clip.input_asset.asset_type == "sequence")
+        if is_sequence_input:
+            from backend.ffmpeg_tools.sequence_export import export_sequence
+
+            default_out = os.path.join(exports_dir, f"{clip.name}_{subdir_name}")
+            out_dir = QFileDialog.getExistingDirectory(
+                self,
+                f"Export Sequence - {subdir_name}",
+                default_out,
+                QFileDialog.ShowDirsOnly,
+            )
+            if not out_dir:
+                return
+
+            self._status_bar.set_message(f"Exporting {clip.name}...")
+            try:
+                export_sequence(source_dir, out_dir)
+                self._status_bar.set_message("")
+                QMessageBox.information(
+                    self, "Export Complete",
+                    f"Sequence exported:\n{out_dir}",
+                )
+            except Exception as e:
+                self._status_bar.set_message("")
+                from ui.sounds.audio_manager import UIAudio
+                UIAudio.error()
+                QMessageBox.critical(
+                    self, "Export Failed",
+                    f"Failed to export sequence:\n{e}",
+                )
+            return
+
         # Read video metadata for fps
         from backend.ffmpeg_tools import read_video_metadata, stitch_video, require_ffmpeg_install
         try:
@@ -238,11 +275,6 @@ class ExportMixin:
 
         metadata = read_video_metadata(clip.root_path)
         fps = metadata.get("fps", 24.0) if metadata else 24.0
-
-        # Default export to _EXPORTS in the clip's project folder
-        subdir_name = os.path.basename(source_dir)
-        exports_dir = os.path.join(clip.root_path, "_EXPORTS")
-        os.makedirs(exports_dir, exist_ok=True)
 
         # Processed has alpha — default to ProRes 4444 (editor-compatible)
         is_processed = subdir_name.lower() == "processed"
@@ -320,15 +352,8 @@ class ExportMixin:
         Processed → WebM (VP9 alpha), everything else → MP4.
         Writes to each clip's _EXPORTS/ folder.
         """
-        from backend.ffmpeg_tools import read_video_metadata, stitch_video, require_ffmpeg_install
         from PySide6.QtWidgets import QDialog, QVBoxLayout, QDialogButtonBox, QTreeWidget, QTreeWidgetItem, QLabel, QComboBox
         import re
-
-        try:
-            require_ffmpeg_install(require_probe=True)
-        except RuntimeError as exc:
-            QMessageBox.critical(self, "FFmpeg Unavailable", str(exc))
-            return
 
         complete_clips = [c for c in self._clip_model.clips if c.state == ClipState.COMPLETE]
         if not complete_clips:
@@ -385,8 +410,13 @@ class ExportMixin:
             child.setCheckState(0, Qt.Checked)
 
             combo = QComboBox()
-            combo.addItems(["MOV ProRes 4444 (alpha)", "WebM VP9 (alpha)", "MP4"])
-            combo.setCurrentIndex(0 if is_processed else 2)
+            is_seq_input = bool(clip.input_asset and clip.input_asset.asset_type == "sequence")
+            if is_seq_input:
+                combo.addItems(["Image Sequence (copy)"])
+                combo.setEnabled(False)
+            else:
+                combo.addItems(["MOV ProRes 4444 (alpha)", "WebM VP9 (alpha)", "MP4"])
+                combo.setCurrentIndex(0 if is_processed else 2)
             tree.setItemWidget(child, 1, combo)
             format_combos[(clip.name, subdir)] = combo
 
@@ -402,7 +432,7 @@ class ExportMixin:
             return
 
         # Collect checked items with user-selected format
-        selected: list[tuple[ClipEntry, str, str, str]] = []
+        selected: list[tuple[ClipEntry, str, str, str, str | None]] = []
         for clip, src, subdir in available:
             parent_node = clip_nodes[clip.name]
             for ci in range(parent_node.childCount()):
@@ -410,7 +440,9 @@ class ExportMixin:
                 if child.text(0) == subdir and child.checkState(0) == Qt.Checked:
                     combo = format_combos.get((clip.name, subdir))
                     fmt_text = combo.currentText() if combo else ""
-                    if "MOV" in fmt_text:
+                    if "Image Sequence" in fmt_text:
+                        ext = None
+                    elif "MOV" in fmt_text:
                         ext = ".mov"
                     elif "WebM" in fmt_text:
                         ext = ".webm"
@@ -418,15 +450,26 @@ class ExportMixin:
                         ext = ".mp4"
                     exports_dir = os.path.join(clip.root_path, "_EXPORTS")
                     os.makedirs(exports_dir, exist_ok=True)
-                    out_path = os.path.join(exports_dir, f"{clip.name}_{subdir}_export{ext}")
-                    selected.append((clip, src, out_path, subdir))
+                    if ext is None:
+                        out_path = os.path.join(exports_dir, f"{clip.name}_{subdir}")
+                    else:
+                        out_path = os.path.join(exports_dir, f"{clip.name}_{subdir}_export{ext}")
+                    selected.append((clip, src, out_path, subdir, ext))
 
         if not selected:
             return
 
+        if any(item[4] is not None for item in selected):
+            from backend.ffmpeg_tools import require_ffmpeg_install
+            try:
+                require_ffmpeg_install(require_probe=True)
+            except RuntimeError as exc:
+                QMessageBox.critical(self, "FFmpeg Unavailable", str(exc))
+                return
+
         # ── Export with progress ──
         progress = QProgressDialog(
-            "Exporting videos...", "Cancel", 0, len(selected), self,
+            "Exporting...", "Cancel", 0, len(selected), self,
         )
         progress.setWindowTitle("Batch Export")
         progress.setWindowModality(Qt.WindowModal)
@@ -434,12 +477,23 @@ class ExportMixin:
 
         exported = []
         failed = []
-        for i, (clip, src, out_path, subdir) in enumerate(selected):
+        for i, (clip, src, out_path, subdir, ext) in enumerate(selected):
             if progress.wasCanceled():
                 break
             progress.setLabelText(f"Exporting {clip.name} / {subdir}...")
             progress.setValue(i)
 
+            if ext is None:
+                from backend.ffmpeg_tools.sequence_export import export_sequence
+                try:
+                    export_sequence(src, out_path)
+                    exported.append(f"{clip.name}/{subdir}")
+                except Exception as e:
+                    logger.error(f"Batch export (sequence) failed for {clip.name}/{subdir}: {e}")
+                    failed.append(f"{clip.name}/{subdir}: {e}")
+                continue
+
+            from backend.ffmpeg_tools import read_video_metadata, stitch_video
             metadata = read_video_metadata(clip.root_path)
             fps = metadata.get("fps", 24.0) if metadata else 24.0
 
@@ -474,7 +528,7 @@ class ExportMixin:
 
         progress.setValue(len(selected))
 
-        summary = f"Exported {len(exported)} video(s)."
+        summary = f"Exported {len(exported)} item(s)."
         if failed:
             summary += f"\n\n{len(failed)} failed:\n" + "\n".join(failed[:5])
         if exported:
