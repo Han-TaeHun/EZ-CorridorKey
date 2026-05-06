@@ -378,6 +378,7 @@ class MainWindow(
         # Run startup diagnostics (deferred so the window is visible first)
         if os.environ.get("CORRIDORKEY_SKIP_STARTUP_DIAGNOSTICS") != "1":
             QTimer.singleShot(500, lambda: self._run_startup_diagnostics(device))
+        QTimer.singleShot(1500, self._prewarm_file_dialog)
 
         # Always start on welcome screen — user picks a project from recents or imports
         # Deferred sync of IO tray divider with viewer splitter
@@ -396,6 +397,23 @@ class MainWindow(
 
         # Re-apply configured window mode after first layout pass.
         QTimer.singleShot(0, self._ensure_window_mode)
+
+    def _prewarm_file_dialog(self) -> None:
+        """Windows 네이티브 파일 다이얼로그의 첫 호출 지연을 백그라운드에서 흡수합니다."""
+        if sys.platform != "win32":
+            return
+
+        try:
+            dlg = QFileDialog(self)
+            dlg.setOption(QFileDialog.DontUseNativeDialog, False)
+            dlg.setFileMode(QFileDialog.ExistingFile)
+            dlg.setWindowOpacity(0.0)
+            dlg.move(-10000, -10000)
+            dlg.open()
+            QTimer.singleShot(0, dlg.reject)
+            QTimer.singleShot(50, dlg.deleteLater)
+        except Exception as exc:
+            logger.debug("file dialog prewarm skipped: %s", exc)
 
     def _ensure_window_mode(self) -> None:
         """Keep the top-level window in configured startup mode."""
