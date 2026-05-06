@@ -310,7 +310,7 @@ class GVMProcessor:
             # Checkpoint: skip batch if ALL output frames already exist.
             # Always reprocess last 3 batches as safety margin against
             # partially-written files from an interrupted run.
-            out_names = [fn.split('.')[0] + '.' + _out_ext for fn in filenames]
+            out_names = [osp.splitext(fn)[0] + '.' + _out_ext for fn in filenames]
             is_tail = batch_id >= total_batches - 3
             if (not is_tail
                     and all(osp.exists(osp.join(_checkpoint_dir, n)) for n in out_names)):

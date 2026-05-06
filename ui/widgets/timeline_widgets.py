@@ -37,18 +37,38 @@ class _FatSlider(QSlider):
         base.setBottom(self.height())
         return base
 
+    def _value_from_x(self, x: float) -> int:
+        """x 좌표를 확장 groove 기준 슬라이더 값으로 변환합니다."""
+        groove = self._groove_rect()
+        if groove.width() <= 0:
+            return self.value()
+        ratio = (x - groove.x()) / groove.width()
+        ratio = max(0.0, min(1.0, ratio))
+        return self.minimum() + round(ratio * (self.maximum() - self.minimum()))
+
     def mousePressEvent(self, event):
         """Jump slider to click position anywhere in the expanded groove."""
         if event.button() == Qt.LeftButton:
-            groove = self._groove_rect()
-            if groove.width() > 0:
-                ratio = (event.position().x() - groove.x()) / groove.width()
-                ratio = max(0.0, min(1.0, ratio))
-                value = self.minimum() + round(ratio * (self.maximum() - self.minimum()))
-                self.setValue(value)
-                event.accept()
-                return
+            self.setValue(self._value_from_x(event.position().x()))
+            self.setSliderDown(True)
+            event.accept()
+            return
         super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        """왼쪽 버튼 드래그 중 슬라이더 값을 갱신합니다."""
+        if event.buttons() & Qt.LeftButton and self.isSliderDown():
+            self.setValue(self._value_from_x(event.position().x()))
+            event.accept()
+            return
+        super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.LeftButton and self.isSliderDown():
+            self.setSliderDown(False)
+            event.accept()
+            return
+        super().mouseReleaseEvent(event)
 
 
 class CoverageBar(QWidget):

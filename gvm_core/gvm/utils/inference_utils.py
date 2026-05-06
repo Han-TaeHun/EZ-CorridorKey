@@ -1,5 +1,6 @@
 import av
 import os
+import re as _re
 import pims
 import numpy as np
 import torch
@@ -81,12 +82,17 @@ _IMAGE_EXTS = frozenset({
 })
 
 
+def _natkey(s):
+    return [int(p) if p.isdigit() else p.lower() for p in _re.split(r'(\d+)', s)]
+
+
 class ImageSequenceReader(Dataset):
     def __init__(self, path, transform=None):
         self.path = path
         self.files = sorted(
-            f for f in os.listdir(path)
-            if os.path.splitext(f)[1].lower() in _IMAGE_EXTS
+            (f for f in os.listdir(path)
+             if os.path.splitext(f)[1].lower() in _IMAGE_EXTS),
+            key=_natkey,
         )
         self.transform = transform
 
@@ -161,7 +167,7 @@ class ImageSequenceWriter:
             if filenames is None:
                 filename = str(self.counter).zfill(4) + '.' + self.extension
             else:
-                filename = filenames[t].split('.')[0] + '.' + self.extension
+                filename = os.path.splitext(filenames[t])[0] + '.' + self.extension
 
             to_pil_image(frames[t]).save(os.path.join(
                 self.path, filename))
@@ -169,4 +175,3 @@ class ImageSequenceWriter:
             
     def close(self):
         pass
-        
