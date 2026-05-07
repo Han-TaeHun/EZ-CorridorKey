@@ -68,15 +68,15 @@ class ClipListModel(QAbstractListModel):
         elif role == self.ExportThumbnailRole:
             return self._export_thumbnails.get(clip.name)
         elif role == Qt.ToolTipRole:
-            lines = [f"State: {clip.state.value}"]
+            lines = [f"상태: {clip.state.value}"]
             if clip.input_asset:
-                lines.append(f"Input: {clip.input_asset.frame_count} frames ({clip.input_asset.asset_type})")
+                lines.append(f"입력: {clip.input_asset.frame_count} 프레임 ({clip.input_asset.asset_type})")
             if clip.alpha_asset:
-                lines.append(f"Alpha: {clip.alpha_asset.frame_count} frames")
+                lines.append(f"알파: {clip.alpha_asset.frame_count} 프레임")
             if clip.warnings:
-                lines.append(f"Warnings: {len(clip.warnings)}")
+                lines.append(f"경고: {len(clip.warnings)}개")
             if clip.error_message:
-                lines.append(f"Error: {clip.error_message}")
+                lines.append(f"오류: {clip.error_message}")
             return "\n".join(lines)
 
         return None

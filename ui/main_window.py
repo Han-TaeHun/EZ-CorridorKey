@@ -444,7 +444,7 @@ class MainWindow(
         # GPU info (right side of brand bar)
         self._gpu_label = QLabel("")
         self._gpu_label.setObjectName("gpuName")
-        self._gpu_label.setToolTip("Detected GPU used for inference")
+        self._gpu_label.setToolTip("추론에 사용되는 감지된 GPU")
         top_bar.addWidget(self._gpu_label)
 
         self._vram_label = QLabel("VRAM")
@@ -458,13 +458,13 @@ class MainWindow(
         self._vram_bar.setTextVisible(False)
         self._vram_bar.setRange(0, 100)
         self._vram_bar.setValue(0)
-        self._vram_bar.setToolTip("GPU video memory usage — updates during inference")
+        self._vram_bar.setToolTip("GPU 비디오 메모리 사용량입니다. 추론 중 업데이트됩니다.")
         top_bar.addWidget(self._vram_bar)
 
         self._vram_text = QLabel("")
         self._vram_text.setObjectName("vramText")
         self._vram_text.setMinimumWidth(70)
-        self._vram_text.setToolTip("Current VRAM used / total available")
+        self._vram_text.setToolTip("현재 사용 중인 VRAM / 전체 사용 가능 용량")
         top_bar.addWidget(self._vram_text)
 
         main_layout.addLayout(top_bar)
@@ -632,8 +632,8 @@ class MainWindow(
         name = info.get("name", "")
         if name.startswith("Apple"):
             self._vram_label.setText("Memory")
-            self._vram_bar.setToolTip("Unified memory usage — CPU and GPU share the same pool")
-            self._vram_text.setToolTip("Current unified memory used / total available")
+            self._vram_bar.setToolTip("통합 메모리 사용량입니다. CPU와 GPU가 같은 메모리 풀을 공유합니다.")
+            self._vram_text.setToolTip("현재 사용 중인 통합 메모리 / 전체 사용 가능 용량")
         pct = info.get("usage_pct", 0)
         used = info.get("used_gb", 0)
         total = info.get("total_gb", 0)

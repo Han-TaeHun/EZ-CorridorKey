@@ -218,7 +218,7 @@ class HotkeysDialog(QDialog):
                     "border: 1px solid #2A2910; font-size: 10px; padding: 2px 6px; }"
                     "QPushButton:hover { color: #CCCCAA; border-color: #454430; }"
                 )
-                reset_btn.setToolTip(f"Reset to default: {defn.default_key}")
+                reset_btn.setToolTip(f"기본값으로 초기화: {defn.default_key}")
                 reset_btn.setCursor(Qt.PointingHandCursor)
                 aid = defn.action_id
                 reset_btn.clicked.connect(

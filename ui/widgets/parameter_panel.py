@@ -41,27 +41,20 @@ from backend import InferenceParams, OutputConfig
 
 
 _COLOR_SPACE_TOOLTIP = (
-    "How CorridorKey interprets the source before inference.\n"
-    "The left INPUT viewer always shows this interpretation, so it should match "
-    "what CorridorKey thinks your footage is.\n\n"
-    "sRGB: standard gamma-corrected footage (most cameras, phone video, PNG/JPG).\n"
-    "Linear: linear-light footage (true linear EXRs, CG renders).\n\n"
-    "Changing this before Run Inference affects live preview and any future "
-    "exports you generate.\n"
-    "Changing it after files are already exported does not rewrite those files on "
-    "disk; rerun inference to save new outputs.\n"
-    "Auto-detected from format/metadata when possible, but you can override it if "
-    "the INPUT viewer looks wrong."
+    "추론 전에 CorridorKey가 소스를 해석하는 방식입니다.\n"
+    "왼쪽 INPUT 뷰어는 항상 이 해석으로 표시되므로, 영상이 CorridorKey에서 어떻게 인식되는지와 맞아야 합니다.\n\n"
+    "sRGB: 표준 감마 보정 영상(대부분의 카메라, 휴대폰 영상, PNG/JPG).\n"
+    "Linear: 리니어 라이트 영상(진짜 리니어 EXR, CG 렌더).\n\n"
+    "추론 실행 전에 변경하면 라이브 미리보기와 이후 생성하는 내보내기에 적용됩니다.\n"
+    "이미 내보낸 파일은 이 값을 바꿔도 디스크에서 다시 작성되지 않습니다. 새 출력으로 저장하려면 추론을 다시 실행하세요.\n"
+    "가능하면 포맷/메타데이터로 자동 감지하지만, INPUT 뷰어가 잘못 보이면 직접 바꿀 수 있습니다."
 )
 
 _LIVE_PREVIEW_TOOLTIP = (
-    "Instantly reprocess the current frame when you adjust Color Space, Despill, "
-    "Refiner, or Despeckle.\n"
-    "Requires a READY or COMPLETE clip with alpha hints.\n"
-    "On a fresh launch, the first preview change may take a moment while the "
-    "inference engine loads.\n"
-    "Preview updates do not rewrite exported files on disk; rerun inference to "
-    "save them."
+    "Color Space, Despill, Refiner, Despeckle 값을 조정하면 현재 프레임을 즉시 다시 처리합니다.\n"
+    "AlphaHint가 있는 READY 또는 COMPLETE 클립이 필요합니다.\n"
+    "앱을 새로 실행한 직후에는 추론 엔진을 불러오느라 첫 미리보기 변경에 시간이 걸릴 수 있습니다.\n"
+    "미리보기 업데이트는 디스크의 내보낸 파일을 다시 작성하지 않습니다. 저장하려면 추론을 다시 실행하세요."
 )
 
 
@@ -118,9 +111,9 @@ class ParameterPanel(QWidget):
         self._gvm_btn = QPushButton("GVM AUTO")
         self._gvm_btn.setEnabled(False)
         self._gvm_btn.setToolTip(
-            "Auto-generate alpha hint for the entire clip.\n"
-            "Uses GVM to predict foreground/background separation.\n"
-            "Available when clip is in RAW state (frames extracted)."
+            "전체 클립의 AlphaHint를 자동 생성합니다.\n"
+            "GVM으로 전경/배경 분리를 예측합니다.\n"
+            "클립이 RAW 상태(프레임 추출 완료)일 때 사용할 수 있습니다."
         )
         self._gvm_btn.clicked.connect(self.gvm_requested.emit)
         alpha_layout.addWidget(self._gvm_btn)
@@ -131,13 +124,13 @@ class ParameterPanel(QWidget):
         self._birefnet_btn = QPushButton("BIREFNET")
         self._birefnet_btn.setEnabled(False)
         self._birefnet_btn.setToolTip(
-            "Auto-generate alpha hint using BiRefNet.\n"
-            "Fully automatic — no painting or annotation needed.\n"
-            "Downloads the selected model variant on first use.\n\n"
-            "Matting: Best for hair/transparency detail (recommended).\n"
-            "Portrait: Optimized for human close-ups.\n"
-            "General: Balanced foreground/background separation.\n"
-            "HR variants: For 2K/4K footage (uses more VRAM)."
+            "BiRefNet으로 AlphaHint를 자동 생성합니다.\n"
+            "완전 자동 방식이라 페인팅이나 어노테이션이 필요 없습니다.\n"
+            "선택한 모델 변형은 처음 사용할 때 다운로드됩니다.\n\n"
+            "Matting: 머리카락/투명 디테일에 가장 적합(권장).\n"
+            "Portrait: 사람 클로즈업에 최적화.\n"
+            "General: 전경/배경 분리 균형형.\n"
+            "HR 변형: 2K/4K 영상용(VRAM을 더 많이 사용)."
         )
         self._birefnet_btn.clicked.connect(self._on_birefnet_clicked)
         birefnet_row.addWidget(self._birefnet_btn, 1)
@@ -145,7 +138,7 @@ class ParameterPanel(QWidget):
         self._birefnet_model = QComboBox()
         self._birefnet_model.setMinimumWidth(120)
         self._birefnet_model.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-        self._birefnet_model.setToolTip("BiRefNet model variant — changes take effect on next run.")
+        self._birefnet_model.setToolTip("BiRefNet 모델 변형입니다. 변경 사항은 다음 실행부터 적용됩니다.")
         # Populate from the wrapper's model registry
         from modules.BiRefNetModule.wrapper import BIREFNET_MODELS, DEFAULT_MODEL
         for display_name in BIREFNET_MODELS:
@@ -180,14 +173,14 @@ class ParameterPanel(QWidget):
         self._track_masks_btn = QPushButton("TRACK MASK")
         self._track_masks_btn.setEnabled(False)
         self._track_masks_btn.setToolTip(
-            "Use SAM2 to turn painted prompts into a dense mask track.\n"
-            "Required before running MatAnyone2 or VideoMaMa.\n\n"
-            "HOW TO USE:\n"
-            "1. Press 1 to select the GREEN brush (foreground — subject to keep)\n"
-            "2. Press 2 to select the RED brush (background — area to remove)\n"
-            "3. Paint strokes on the left viewer over your footage\n"
-            "4. Click TRACK MASK to preview SAM2 on the painted frame\n"
-            "5. If the preview looks right, confirm to propagate across all frames"
+            "SAM2로 페인트한 프롬프트를 촘촘한 마스크 트랙으로 변환합니다.\n"
+            "MatAnyone2 또는 VideoMaMa를 실행하기 전에 필요합니다.\n\n"
+            "사용 방법:\n"
+            "1. 1번을 눌러 초록 브러시를 선택합니다(전경, 남길 대상).\n"
+            "2. 2번을 눌러 빨간 브러시를 선택합니다(배경, 제거할 영역).\n"
+            "3. 왼쪽 뷰어의 영상 위에 스트로크를 그립니다.\n"
+            "4. TRACK MASK를 클릭해 페인트한 프레임에서 SAM2 미리보기를 확인합니다.\n"
+            "5. 미리보기가 적절하면 확인해서 모든 프레임으로 전파합니다."
         )
         self._track_masks_btn.clicked.connect(self.track_masks_requested.emit)
         alpha_layout.addWidget(self._track_masks_btn)
@@ -205,12 +198,12 @@ class ParameterPanel(QWidget):
         self._matanyone2_btn = QPushButton("MATANYONE2")
         self._matanyone2_btn.setEnabled(False)
         self._matanyone2_btn.setToolTip(
-            "Generate alpha hints using MatAnyone2 video matting.\n"
-            "Requires paint strokes on the FIRST FRAME (frame 1).\n\n"
-            "1. Navigate to frame 1 (the very first frame)\n"
-            "2. Paint foreground (hotkey 1) and background (hotkey 2)\n"
-            "3. Click Track Mask to generate dense masks with SAM2\n"
-            "4. Click MATANYONE2 to generate temporally coherent AlphaHint"
+            "MatAnyone2 비디오 매팅으로 AlphaHint를 생성합니다.\n"
+            "첫 프레임(프레임 1)에 페인트 스트로크가 필요합니다.\n\n"
+            "1. 프레임 1(가장 첫 프레임)로 이동합니다.\n"
+            "2. 전경(단축키 1)과 배경(단축키 2)을 페인트합니다.\n"
+            "3. Track Mask를 클릭해 SAM2로 촘촘한 마스크를 생성합니다.\n"
+            "4. MATANYONE2를 클릭해 시간적으로 안정적인 AlphaHint를 생성합니다."
         )
         self._matanyone2_btn.clicked.connect(self.matanyone2_requested.emit)
         alpha_layout.addWidget(self._matanyone2_btn)
@@ -218,10 +211,10 @@ class ParameterPanel(QWidget):
         self._videomama_btn = QPushButton("VIDEOMAMA")
         self._videomama_btn.setEnabled(False)
         self._videomama_btn.setToolTip(
-            "Generate alpha hints from a dense VideoMaMa mask track.\n\n"
-            "1. Paint sparse foreground/background prompts\n"
-            "2. Click Track Mask to generate dense masks with SAM2\n"
-            "3. Click VIDEOMAMA to generate AlphaHint"
+            "촘촘한 VideoMaMa 마스크 트랙에서 AlphaHint를 생성합니다.\n\n"
+            "1. 전경/배경 프롬프트를 간단히 페인트합니다.\n"
+            "2. Track Mask를 클릭해 SAM2로 촘촘한 마스크를 생성합니다.\n"
+            "3. VIDEOMAMA를 클릭해 AlphaHint를 생성합니다."
         )
         self._videomama_btn.clicked.connect(self.videomama_requested.emit)
         alpha_layout.addWidget(self._videomama_btn)
@@ -234,11 +227,11 @@ class ParameterPanel(QWidget):
         self._import_alpha_btn = QPushButton("IMPORT ALPHA")
         self._import_alpha_btn.setEnabled(False)
         self._import_alpha_btn.setToolTip(
-            "Import alpha hints from an image folder or video file.\n"
-            "Supports: PNG/JPG/TIF/EXR sequences, or MOV/MP4/ProRes video.\n"
-            "White = foreground, black = background.\n"
-            "Files are copied into the clip's AlphaHint/ folder\n"
-            "and the clip advances to READY state for inference."
+            "이미지 폴더나 비디오 파일에서 AlphaHint를 가져옵니다.\n"
+            "지원 형식: PNG/JPG/TIF/EXR 시퀀스 또는 MOV/MP4/ProRes 비디오.\n"
+            "흰색 = 전경, 검은색 = 배경입니다.\n"
+            "파일은 클립의 AlphaHint/ 폴더로 복사되며,\n"
+            "클립은 추론 가능한 READY 상태로 전환됩니다."
         )
         self._import_alpha_btn.clicked.connect(self.import_alpha_requested.emit)
         alpha_layout.addWidget(self._import_alpha_btn)
@@ -270,9 +263,9 @@ class ParameterPanel(QWidget):
         self._despill_slider.setRange(0, 10)
         self._despill_slider.setValue(5)
         self._despill_slider.setToolTip(
-            "Green spill removal strength (0.0–1.0).\n"
-            "Removes green color bleed from hair, skin, and edges.\n"
-            "1.0 = full despill, 0.0 = no despill (keep original colors)."
+            "그린 스필 제거 강도(0.0-1.0)입니다.\n"
+            "머리카락, 피부, 가장자리의 초록색 번짐을 제거합니다.\n"
+            "1.0 = 최대 제거, 0.0 = 제거 없음(원본 색 유지)."
         )
         self._despill_slider.valueChanged.connect(self._on_despill_changed)
         inf_layout.addWidget(self._despill_slider)
@@ -282,9 +275,8 @@ class ParameterPanel(QWidget):
         self._despeckle_check = QCheckBox("Despeckle")
         self._despeckle_check.setChecked(True)
         self._despeckle_check.setToolTip(
-            "Automatic garbage matte — removes small floating noise\n"
-            "and speckles from the alpha by discarding isolated regions\n"
-            "smaller than the size threshold."
+            "자동 가비지 매트입니다.\n"
+            "크기 임계값보다 작은 고립 영역을 버려 알파의 작은 떠 있는 노이즈와 점을 제거합니다."
         )
         self._despeckle_check.stateChanged.connect(self._on_despeckle_toggled)
         despeckle_row.addWidget(self._despeckle_check)
@@ -293,9 +285,9 @@ class ParameterPanel(QWidget):
         self._despeckle_size.setValue(400)
         self._despeckle_size.setSuffix("px")
         self._despeckle_size.setToolTip(
-            "Minimum area (in pixels) for a region to survive.\n"
-            "Isolated alpha blobs smaller than this are removed.\n"
-            "Lower = keep more detail, higher = cleaner matte."
+            "영역이 유지되기 위한 최소 면적(픽셀)입니다.\n"
+            "이 값보다 작은 고립된 알파 덩어리는 제거됩니다.\n"
+            "낮을수록 디테일을 더 보존하고, 높을수록 매트가 더 깨끗해집니다."
         )
         self._despeckle_size.valueChanged.connect(self._emit_changed)
         despeckle_row.addWidget(self._despeckle_size, 1)
@@ -308,10 +300,10 @@ class ParameterPanel(QWidget):
         self._refiner_slider.setRange(0, 30)
         self._refiner_slider.setValue(10)
         self._refiner_slider.setToolTip(
-            "Edge refinement strength (0.0–3.0).\n"
-            "Scales the CNN refiner's edge corrections.\n"
-            "1.0 = default, 0.0 = backbone only (no refinement),\n"
-            "higher = sharper edges but may introduce artifacts."
+            "가장자리 보정 강도(0.0-3.0)입니다.\n"
+            "CNN 리파이너의 가장자리 보정량을 조절합니다.\n"
+            "1.0 = 기본값, 0.0 = 백본만 사용(보정 없음),\n"
+            "값이 높을수록 가장자리가 선명해지지만 아티팩트가 생길 수 있습니다."
         )
         self._refiner_slider.valueChanged.connect(self._on_refiner_changed)
         inf_layout.addWidget(self._refiner_slider)
@@ -334,15 +326,15 @@ class ParameterPanel(QWidget):
         self._fg_check = QCheckBox("FG")
         self._fg_check.setChecked(True)
         self._fg_check.setToolTip(
-            "Foreground — despilled subject on black background.\n"
-            "Green spill removed from hair and edges.\n"
-            "Straight alpha (not premultiplied)."
+            "전경 출력입니다. 검은 배경 위에 디스필 처리된 피사체를 저장합니다.\n"
+            "머리카락과 가장자리의 그린 스필이 제거됩니다.\n"
+            "스트레이트 알파입니다(프리멀티플라이 아님)."
         )
         fg_row.addWidget(self._fg_check, 1)
         self._fg_format = QComboBox()
         self._fg_format.addItems(["exr", "png"])
         self._fg_format.setFixedWidth(70)
-        self._fg_format.setToolTip("EXR = 32-bit float (post-production).\nPNG = 8-bit (general use).")
+        self._fg_format.setToolTip("EXR = 32비트 float(후반 작업용).\nPNG = 8비트(일반 용도).")
         fg_row.addWidget(self._fg_format)
         out_layout.addLayout(fg_row)
 
@@ -351,15 +343,15 @@ class ParameterPanel(QWidget):
         self._matte_check = QCheckBox("Matte")
         self._matte_check.setChecked(True)
         self._matte_check.setToolTip(
-            "Alpha matte — grayscale transparency map.\n"
-            "White = fully opaque, black = fully transparent.\n"
-            "Use in compositing software for manual keying control."
+            "알파 매트입니다. 회색조 투명도 맵입니다.\n"
+            "흰색 = 완전 불투명, 검은색 = 완전 투명.\n"
+            "합성 소프트웨어에서 수동 키잉 제어에 사용합니다."
         )
         matte_row.addWidget(self._matte_check, 1)
         self._matte_format = QComboBox()
         self._matte_format.addItems(["exr", "png"])
         self._matte_format.setFixedWidth(70)
-        self._matte_format.setToolTip("EXR = 32-bit float (post-production).\nPNG = 8-bit (general use).")
+        self._matte_format.setToolTip("EXR = 32비트 float(후반 작업용).\nPNG = 8비트(일반 용도).")
         matte_row.addWidget(self._matte_format)
         out_layout.addLayout(matte_row)
 
@@ -368,15 +360,15 @@ class ParameterPanel(QWidget):
         self._comp_check = QCheckBox("Comp")
         self._comp_check.setChecked(True)
         self._comp_check.setToolTip(
-            "Composite — final keyed result over checkerboard.\n"
-            "Best representation of the key quality.\n"
-            "Colors match the original input faithfully."
+            "합성 미리보기 출력입니다. 체크보드 위에 최종 키 결과를 보여줍니다.\n"
+            "키 품질을 확인하기 가장 좋은 표현입니다.\n"
+            "색상은 원본 입력과 최대한 일치합니다."
         )
         comp_row.addWidget(self._comp_check, 1)
         self._comp_format = QComboBox()
         self._comp_format.addItems(["png", "exr"])
         self._comp_format.setFixedWidth(70)
-        self._comp_format.setToolTip("PNG = 8-bit with transparency.\nEXR = 32-bit float (post-production).")
+        self._comp_format.setToolTip("PNG = 투명도를 포함한 8비트.\nEXR = 32비트 float(후반 작업용).")
         comp_row.addWidget(self._comp_format)
         out_layout.addLayout(comp_row)
 
@@ -385,15 +377,15 @@ class ParameterPanel(QWidget):
         self._proc_check = QCheckBox("Processed")
         self._proc_check.setChecked(True)
         self._proc_check.setToolTip(
-            "Processed — production-ready RGBA (straight, linear).\n"
-            "Designed for import into Resolve, Premiere, and compositing tools.\n"
-            "Includes despill + garbage matte cleanup applied."
+            "Processed 출력입니다. 제작용 RGBA(스트레이트, 리니어)입니다.\n"
+            "Resolve, Premiere, 합성 도구로 가져가기 좋게 설계되었습니다.\n"
+            "디스필과 가비지 매트 정리가 적용됩니다."
         )
         proc_row.addWidget(self._proc_check, 1)
         self._proc_format = QComboBox()
         self._proc_format.addItems(["exr", "png"])
         self._proc_format.setFixedWidth(70)
-        self._proc_format.setToolTip("EXR = 32-bit float (recommended for Processed).\nPNG = 8-bit (lossy for straight linear RGBA).")
+        self._proc_format.setToolTip("EXR = 32비트 float(Processed에 권장).\nPNG = 8비트(스트레이트 리니어 RGBA에는 손실 가능).")
         proc_row.addWidget(self._proc_format)
         out_layout.addLayout(proc_row)
 
@@ -410,16 +402,13 @@ class ParameterPanel(QWidget):
         self._parallel_spin = QSpinBox()
         self._parallel_spin.setRange(1, 64)
         self._parallel_spin.setToolTip(
-            "Process multiple frames simultaneously using parallel engines.\n\n"
-            "Each extra engine loads a full copy of the model.\n"
-            "CUDA: ~6-8 GB VRAM per engine.\n"
-            "\n"
-            "Default: 1 (safest). Try 2 first, then increase if stable.\n\n"
-            "EXPERIMENTAL: Values above 8 are for high-memory CUDA systems\n"
-            "(e.g. RTX 6000).\n"
-            "If you run out of memory, the app will automatically scale\n"
-            "back to however many engines fit.\n\n"
-            "CUDA only right now. Not currently supported on Apple Silicon."
+            "병렬 엔진으로 여러 프레임을 동시에 처리합니다.\n\n"
+            "엔진을 하나 추가할 때마다 모델 전체 사본이 하나 더 로드됩니다.\n"
+            "CUDA: 엔진당 약 6-8GB VRAM을 사용합니다.\n\n"
+            "기본값: 1(가장 안전). 먼저 2를 시도한 뒤 안정적이면 늘리세요.\n\n"
+            "실험적 기능: 8보다 큰 값은 RTX 6000 같은 고메모리 CUDA 시스템용입니다.\n"
+            "메모리가 부족하면 앱이 자동으로 가능한 엔진 수까지 줄입니다.\n\n"
+            "현재는 CUDA에서만 지원합니다. Apple Silicon에서는 아직 지원하지 않습니다."
         )
         self._parallel_spin.setFixedWidth(60)
         from ui.widgets.preferences_dialog import get_setting_int, KEY_PARALLEL_CLIPS, DEFAULT_PARALLEL_CLIPS

@@ -184,7 +184,7 @@ class PreferencesDialog(QDialog):
         ui_group = QGroupBox("User Interface")
         ui_layout = QVBoxLayout(ui_group)
 
-        self._tooltips_cb = QCheckBox("Show tooltips on controls")
+        self._tooltips_cb = QCheckBox("컨트롤 툴팁 표시")
         self._tooltips_cb.setChecked(
             get_setting_bool(KEY_SHOW_TOOLTIPS, DEFAULT_SHOW_TOOLTIPS)
         )
@@ -204,9 +204,9 @@ class PreferencesDialog(QDialog):
 
         self._copy_source_cb = QCheckBox("Copy source videos into project folder")
         self._copy_source_cb.setToolTip(
-            "When enabled, imported videos are copied into the project folder.\n"
-            "When disabled, the project references the original file in place.\n\n"
-            "Note: Deleting a project never touches the original source file."
+            "켜면 가져온 비디오를 프로젝트 폴더로 복사합니다.\n"
+            "끄면 프로젝트가 원본 파일 위치를 그대로 참조합니다.\n\n"
+            "참고: 프로젝트를 삭제해도 원본 소스 파일은 건드리지 않습니다."
         )
         self._copy_source_cb.setChecked(
             get_setting_bool(KEY_COPY_SOURCE, DEFAULT_COPY_SOURCE)
@@ -215,10 +215,10 @@ class PreferencesDialog(QDialog):
 
         self._copy_sequences_cb = QCheckBox("Copy imported image sequences into project folder")
         self._copy_sequences_cb.setToolTip(
-            "When enabled, imported image sequence files are copied into the project.\n"
-            "When disabled (default), the project references the original files in place.\n\n"
-            "Referencing saves disk space for large EXR/TIF sequences.\n"
-            "Original files are never modified regardless of this setting."
+            "켜면 가져온 이미지 시퀀스 파일을 프로젝트 안으로 복사합니다.\n"
+            "끄면(기본값) 프로젝트가 원본 파일 위치를 그대로 참조합니다.\n\n"
+            "참조 방식은 큰 EXR/TIF 시퀀스에서 디스크 공간을 절약합니다.\n"
+            "이 설정과 관계없이 원본 파일은 수정되지 않습니다."
         )
         self._copy_sequences_cb.setChecked(
             get_setting_bool(KEY_COPY_SEQUENCES, DEFAULT_COPY_SEQUENCES)
@@ -241,11 +241,11 @@ class PreferencesDialog(QDialog):
         idx = self._exr_compression_combo.findData(saved_compression)
         self._exr_compression_combo.setCurrentIndex(max(0, idx))
         self._exr_compression_combo.setToolTip(
-            "Compression used when writing EXR output files.\n\n"
-            "DWAB: Lossy wavelet, smallest files. Default.\n"
-            "PIZ: Lossless wavelet, preferred by compositors.\n"
-            "ZIP: Lossless deflate, good for clean renders.\n"
-            "None: No compression, fastest write, largest files."
+            "EXR 출력 파일을 쓸 때 사용할 압축 방식입니다.\n\n"
+            "DWAB: 손실 웨이블릿, 파일 크기가 가장 작음. 기본값.\n"
+            "PIZ: 무손실 웨이블릿, 합성 작업에서 선호.\n"
+            "ZIP: 무손실 deflate, 깨끗한 렌더에 적합.\n"
+            "None: 압축 없음, 쓰기는 가장 빠르지만 파일이 가장 큼."
         )
         output_layout.addWidget(self._exr_compression_combo)
 
@@ -261,11 +261,11 @@ class PreferencesDialog(QDialog):
         if saved_dir:
             self._output_dir_edit.setText(saved_dir)
         self._output_dir_edit.setToolTip(
-            "Global default directory for inference output.\n\n"
-            "When set, outputs go to:\n"
-            "  <this folder>/<ProjectName>/<ClipName>/FG, Matte, etc.\n\n"
-            "Leave empty to use the default (Output/ inside each clip).\n"
-            "Per-clip overrides (right-click → Set Output Directory) take priority."
+            "추론 출력의 전역 기본 디렉터리입니다.\n\n"
+            "설정하면 출력은 다음 위치에 저장됩니다:\n"
+            "  <이 폴더>/<ProjectName>/<ClipName>/FG, Matte 등\n\n"
+            "비워 두면 기본값(각 클립 안의 Output/)을 사용합니다.\n"
+            "클립별 재정의(우클릭 - Set Output Directory)가 우선합니다."
         )
         dir_row.addWidget(self._output_dir_edit, 1)
 
@@ -297,14 +297,14 @@ class PreferencesDialog(QDialog):
         idx = self._model_resolution_combo.findData(saved_res)
         self._model_resolution_combo.setCurrentIndex(max(0, idx))
         self._model_resolution_combo.setToolTip(
-            "Resolution the model processes internally before upscaling to your frame size.\n"
-            "Applies to all backends (CUDA, MPS, MLX, CPU).\n\n"
-            "2048: Full quality — captures fine hair strands and edge detail.\n"
-            "Matches the original CorridorKey quality. Recommended for CUDA with 8GB+ VRAM.\n"
-            "WARNING: Very slow on Apple Silicon (needs 20GB+ memory).\n\n"
-            "1024: Faster inference with lower memory usage.\n"
-            "Fine hair detail may be lost. Recommended for Apple Silicon / low-VRAM GPUs.\n\n"
-            "Changing this requires an engine reload (happens automatically)."
+            "모델이 프레임 크기로 업스케일하기 전에 내부적으로 처리하는 해상도입니다.\n"
+            "모든 백엔드(CUDA, MPS, MLX, CPU)에 적용됩니다.\n\n"
+            "2048: 전체 품질. 가는 머리카락과 가장자리 디테일을 더 잘 잡습니다.\n"
+            "원본 CorridorKey 품질과 같습니다. VRAM 8GB 이상 CUDA에 권장합니다.\n"
+            "주의: Apple Silicon에서는 매우 느립니다(메모리 20GB 이상 필요).\n\n"
+            "1024: 메모리를 덜 쓰고 추론이 더 빠릅니다.\n"
+            "가는 머리카락 디테일이 손실될 수 있습니다. Apple Silicon / 저VRAM GPU에 권장합니다.\n\n"
+            "이 값을 바꾸면 엔진을 다시 로드해야 합니다(자동으로 처리됨)."
         )
         inference_layout.addWidget(self._model_resolution_combo)
 
@@ -322,11 +322,11 @@ class PreferencesDialog(QDialog):
             idx = self._backend_combo.findData(saved_backend)
             self._backend_combo.setCurrentIndex(max(0, idx))
             self._backend_combo.setToolTip(
-                "Choose the inference backend for Apple Silicon.\n\n"
-                "MLX: Native Apple Metal — fastest on M1/M2/M3/M4.\n"
-                "MPS: PyTorch Metal Performance Shaders — compatible fallback.\n"
-                "Auto: Uses MLX if installed, otherwise falls back to MPS.\n\n"
-                "Changing this requires an engine reload (happens automatically)."
+                "Apple Silicon에서 사용할 추론 백엔드를 선택합니다.\n\n"
+                "MLX: 네이티브 Apple Metal. M1/M2/M3/M4에서 가장 빠릅니다.\n"
+                "MPS: PyTorch Metal Performance Shaders. 호환용 대체 백엔드입니다.\n"
+                "Auto: MLX가 설치되어 있으면 사용하고, 아니면 MPS로 전환합니다.\n\n"
+                "이 값을 바꾸면 엔진을 다시 로드해야 합니다(자동으로 처리됨)."
             )
             inference_layout.addWidget(self._backend_combo)
 
@@ -338,8 +338,8 @@ class PreferencesDialog(QDialog):
 
         self._loop_cb = QCheckBox("Loop playback within in/out range")
         self._loop_cb.setToolTip(
-            "When enabled, playback loops back to the in-point\n"
-            "after reaching the out-point (or start/end if no range)."
+            "켜면 재생이 out 지점에 도달한 뒤 in 지점으로 돌아가 반복됩니다.\n"
+            "범위가 없으면 시작/끝 지점을 기준으로 반복됩니다."
         )
         self._loop_cb.setChecked(
             get_setting_bool(KEY_LOOP_PLAYBACK, DEFAULT_LOOP_PLAYBACK)
@@ -362,9 +362,9 @@ class PreferencesDialog(QDialog):
         idx = self._tracker_model_combo.findData(saved_model)
         self._tracker_model_combo.setCurrentIndex(max(0, idx))
         self._tracker_model_combo.setToolTip(
-            "Fast: lower VRAM, lower quality.\n"
-            "Base+: best default tradeoff for this app.\n"
-            "Highest Quality: slowest, heaviest tracker."
+            "Fast: VRAM 사용량이 낮고 품질도 낮습니다.\n"
+            "Base+: 이 앱에서 기본값으로 쓰기 좋은 균형입니다.\n"
+            "Highest Quality: 가장 느리고 가장 무거운 트래커입니다."
         )
         tracking_layout.addWidget(self._tracker_model_combo)
 
@@ -429,21 +429,18 @@ class PreferencesDialog(QDialog):
 
         self._repair_ffmpeg_btn = QPushButton("Repair FFmpeg")
         self._repair_ffmpeg_btn.setToolTip(
-            "Windows: download and install a full bundled FFmpeg build into "
-            "tools/ffmpeg, validate ffmpeg + ffprobe 7+, and switch CorridorKey "
-            "to that local copy immediately.\n\n"
-            "macOS: install FFmpeg via Homebrew and validate ffmpeg + ffprobe 7+.\n\n"
-            "Linux: do not change system packages. CorridorKey shows the exact "
-            "install commands and copies them to your clipboard instead."
+            "Windows: 전체 번들 FFmpeg 빌드를 tools/ffmpeg에 다운로드해 설치하고, "
+            "ffmpeg + ffprobe 7+를 검증한 뒤 CorridorKey가 즉시 해당 로컬 복사본을 사용하게 합니다.\n\n"
+            "macOS: Homebrew로 FFmpeg를 설치하고 ffmpeg + ffprobe 7+를 검증합니다.\n\n"
+            "Linux: 시스템 패키지는 변경하지 않습니다. 대신 CorridorKey가 정확한 설치 명령을 보여주고 클립보드에 복사합니다."
         )
         self._repair_ffmpeg_btn.clicked.connect(self._on_repair_ffmpeg)
         ffmpeg_btn_row.addWidget(self._repair_ffmpeg_btn)
 
         self._open_ffmpeg_btn = QPushButton("Open FFmpeg Folder")
         self._open_ffmpeg_btn.setToolTip(
-            "Open CorridorKey's bundled FFmpeg folder.\n"
-            "If Repair FFmpeg has been run on Windows, this is where the local "
-            "full build is stored."
+            "CorridorKey의 번들 FFmpeg 폴더를 엽니다.\n"
+            "Windows에서 Repair FFmpeg를 실행했다면 로컬 전체 빌드가 여기에 저장됩니다."
         )
         self._open_ffmpeg_btn.clicked.connect(self._open_local_ffmpeg_dir)
         ffmpeg_btn_row.addWidget(self._open_ffmpeg_btn)

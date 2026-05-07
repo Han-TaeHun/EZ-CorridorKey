@@ -85,13 +85,13 @@ class IOTrayPanel(IOTrayActionsMixin, QWidget):
 
         self._reset_io_btn = QPushButton("RESET I/O")
         self._reset_io_btn.setObjectName("trayAddBtn")
-        self._reset_io_btn.setToolTip("Clear in/out markers on all clips")
+        self._reset_io_btn.setToolTip("모든 클립의 In/Out 마커를 지웁니다.")
         self._reset_io_btn.clicked.connect(self._on_reset_in_out)
         input_header_row.addWidget(self._reset_io_btn)
 
         self._add_btn = QPushButton("+ ADD")
         self._add_btn.setObjectName("trayAddBtn")
-        self._add_btn.setToolTip("Import clips — choose a folder or video file(s)")
+        self._add_btn.setToolTip("클립을 가져옵니다. 폴더 또는 비디오 파일을 선택하세요.")
         self._add_btn.clicked.connect(self._on_add_clicked)
         input_header_row.addWidget(self._add_btn)
 

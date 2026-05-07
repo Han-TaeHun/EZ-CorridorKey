@@ -27,7 +27,7 @@ def test_warning_tooltip_wraps_full_message_without_truncation():
     tooltip = status_bar._warn_btn.toolTip()
 
     assert "..." not in tooltip
-    assert "Click for all warnings" in tooltip
+    assert "클릭하면 모든 경고를 볼 수 있습니다" in tooltip
     assert message in tooltip.replace("\n", " ")
 
 

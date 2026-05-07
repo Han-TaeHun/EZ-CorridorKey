@@ -49,7 +49,7 @@ class FrameScrubber(QWidget):
         self._start_btn = QPushButton("\u25C0\u25C0")  # ◀◀
         self._start_btn.setFixedWidth(28)
         self._start_btn.setStyleSheet(btn_style)
-        self._start_btn.setToolTip("Go to first frame")
+        self._start_btn.setToolTip("첫 프레임으로 이동")
         self._start_btn.clicked.connect(self._go_start)
         row.addWidget(self._start_btn)
 
@@ -57,7 +57,7 @@ class FrameScrubber(QWidget):
         self._prev_btn = QPushButton("\u25C0")  # ◀
         self._prev_btn.setFixedWidth(24)
         self._prev_btn.setStyleSheet(btn_style)
-        self._prev_btn.setToolTip("Previous frame")
+        self._prev_btn.setToolTip("이전 프레임")
         self._prev_btn.clicked.connect(self._step_back)
         row.addWidget(self._prev_btn)
 
@@ -65,7 +65,7 @@ class FrameScrubber(QWidget):
         self._play_btn = QPushButton("\u25B6")  # ▶ (play icon)
         self._play_btn.setFixedWidth(24)
         self._play_btn.setStyleSheet(btn_style)
-        self._play_btn.setToolTip("Play / Pause (Space)")
+        self._play_btn.setToolTip("재생 / 일시정지 (Space)")
         self._play_btn.clicked.connect(self.toggle_playback)
         row.addWidget(self._play_btn)
 
@@ -78,10 +78,10 @@ class FrameScrubber(QWidget):
         # Coverage bar (top of center column — same width as slider)
         self._coverage_bar = CoverageBar()
         self._coverage_bar.setToolTip(
-            "Coverage bar — shows which frames have been processed.\n"
-            "Green lane: painted frames (brush strokes).\n"
-            "White lane: alpha hint coverage.\n"
-            "Yellow lane: inference output coverage."
+            "커버리지 바입니다. 처리된 프레임 범위를 보여줍니다.\n"
+            "초록 레인: 페인트한 프레임(브러시 스트로크).\n"
+            "흰색 레인: AlphaHint 커버리지.\n"
+            "노란 레인: 추론 출력 커버리지."
         )
         center_layout.addWidget(self._coverage_bar)
 
@@ -90,7 +90,7 @@ class FrameScrubber(QWidget):
         self._slider.setMinimum(0)
         self._slider.setMaximum(0)
         self._slider.setEnabled(False)
-        self._slider.setToolTip("Scrub through frames. Scroll wheel or Left/Right to step.")
+        self._slider.setToolTip("프레임을 탐색합니다. 스크롤 휠 또는 Left/Right 키로 한 단계씩 이동합니다.")
         self._slider.valueChanged.connect(self._on_slider_changed)
         center_layout.addWidget(self._slider)
 
@@ -113,7 +113,7 @@ class FrameScrubber(QWidget):
         self._next_btn = QPushButton("\u25B6")  # ▶
         self._next_btn.setFixedWidth(24)
         self._next_btn.setStyleSheet(btn_style)
-        self._next_btn.setToolTip("Next frame")
+        self._next_btn.setToolTip("다음 프레임")
         self._next_btn.clicked.connect(self._step_forward)
         row.addWidget(self._next_btn)
 
@@ -121,7 +121,7 @@ class FrameScrubber(QWidget):
         self._end_btn = QPushButton("\u25B6\u25B6")  # ▶▶
         self._end_btn.setFixedWidth(28)
         self._end_btn.setStyleSheet(btn_style)
-        self._end_btn.setToolTip("Go to last frame")
+        self._end_btn.setToolTip("마지막 프레임으로 이동")
         self._end_btn.clicked.connect(self._go_end)
         row.addWidget(self._end_btn)
 
@@ -309,14 +309,14 @@ class FrameScrubber(QWidget):
             return
         self._playing = True
         self._play_btn.setText("\u275A\u275A")  # ❚❚ (pause icon)
-        self._play_btn.setToolTip("Pause (Space)")
+        self._play_btn.setToolTip("일시정지 (Space)")
         self._playback_timer.start()
 
     def _stop_playback(self) -> None:
         self._playing = False
         self._playback_timer.stop()
         self._play_btn.setText("\u25B6")  # ▶ (play icon)
-        self._play_btn.setToolTip("Play (Space)")
+        self._play_btn.setToolTip("재생 (Space)")
 
     def _playback_tick(self) -> None:
         """Advance one frame during playback. Loops within in/out range if set."""

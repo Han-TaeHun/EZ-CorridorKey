@@ -54,7 +54,7 @@ class RecentProjectCard(QFrame):
         folder_btn = QPushButton("\uD83D\uDCC2")  # open folder icon
         folder_btn.setObjectName("projectFolderBtn")
         folder_btn.setFixedSize(16, 16)
-        folder_btn.setToolTip("Open in Finder" if sys.platform == "darwin" else "Open in Explorer")
+        folder_btn.setToolTip("Finder에서 열기" if sys.platform == "darwin" else "탐색기에서 열기")
         folder_btn.clicked.connect(self._on_open_folder)
         btn_layout.addWidget(folder_btn, 0, Qt.AlignHCenter)
 
@@ -63,7 +63,7 @@ class RecentProjectCard(QFrame):
         delete_btn = QPushButton("\u00D7")  # ×
         delete_btn.setObjectName("projectDeleteBtn")
         delete_btn.setFixedSize(16, 16)
-        delete_btn.setToolTip("Remove project")
+        delete_btn.setToolTip("프로젝트 제거")
         delete_btn.clicked.connect(self._on_delete)
         btn_layout.addWidget(delete_btn, 0, Qt.AlignHCenter)
 

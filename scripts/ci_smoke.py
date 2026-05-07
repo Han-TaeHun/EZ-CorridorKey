@@ -55,9 +55,9 @@ def _exercise_ffmpeg_repair_button(app, prefs) -> None:
     import backend.ffmpeg_tools as ffmpeg_tools
     from PySide6.QtWidgets import QMessageBox
 
-    if "download and install a full bundled FFmpeg build" not in prefs._repair_ffmpeg_btn.toolTip():
+    if "전체 번들 FFmpeg 빌드" not in prefs._repair_ffmpeg_btn.toolTip():
         raise RuntimeError("Repair FFmpeg tooltip text missing expected explanation")
-    if "bundled FFmpeg folder" not in prefs._open_ffmpeg_btn.toolTip():
+    if "번들 FFmpeg 폴더" not in prefs._open_ffmpeg_btn.toolTip():
         raise RuntimeError("Open FFmpeg Folder tooltip text missing expected explanation")
 
     state = {"ok": False}

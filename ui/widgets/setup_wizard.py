@@ -660,8 +660,8 @@ class SetupWizard(QDialog):
 
         default_btn = QPushButton("Default Location")
         default_btn.setToolTip(
-            "Reset the install path to the platform default "
-            "(in case you changed it and want to return)."
+            "설치 경로를 플랫폼 기본값으로 되돌립니다.\n"
+            "경로를 변경했다가 원래대로 돌아가고 싶을 때 사용하세요."
         )
         default_btn.setStyleSheet(
             "QPushButton { color: #ccc; border: 1px solid #555; padding: 6px 14px; "

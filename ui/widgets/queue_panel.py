@@ -98,7 +98,7 @@ class QueuePanel(QWidget):
         self._tab.setCursor(Qt.PointingHandCursor)
         self._tab.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
         self._tab.setFixedWidth(_TAB_W)
-        self._tab.setToolTip("Toggle queue panel (Q)")
+        self._tab.setToolTip("큐 패널을 열거나 닫습니다(Q).")
         self._tab.clicked.connect(self.toggle_collapsed)
 
         tab_layout = QVBoxLayout(self._tab)
@@ -159,7 +159,7 @@ class QueuePanel(QWidget):
             "color: #555540; }"
             "QPushButton:hover { color: #CCCCAA; border-color: #454430; }"
         )
-        self._clear_btn.setToolTip("Clear completed and cancelled jobs")
+        self._clear_btn.setToolTip("완료되었거나 취소된 작업을 지웁니다.")
         self._clear_btn.clicked.connect(self._on_clear)
         header_layout.addWidget(self._clear_btn)
 
@@ -333,7 +333,7 @@ class QueuePanel(QWidget):
                 "font-size: 9px; border: none; padding: 0; }"
                 "QPushButton:hover { color: #999980; }"
             )
-            dismiss_btn.setToolTip("Dismiss")
+            dismiss_btn.setToolTip("목록에서 숨기기")
             job_id = job.id
             dismiss_btn.clicked.connect(
                 lambda checked, jid=job_id: self._dismiss_job(jid)

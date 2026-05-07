@@ -367,13 +367,13 @@ class PreviewViewport(QWidget):
         btn.setFixedHeight(24)
         btn.setFixedWidth(50)
         btn.setToolTip(
-            "Toggle A/B wipe comparison (hotkey: A)\n\n"
-            "Overlays input (A) and current output (B) in one viewer\n"
-            "with a diagonal divider line.\n\n"
-            "Drag the center handle to slide the line.\n"
-            "Drag above or below the handle to rotate the angle.\n"
-            "Scroll wheel to slide the line (Shift+scroll for fine-grain).\n"
-            "Middle-click the line to reset to default."
+            "A/B 와이프 비교를 켜거나 끕니다(단축키: A).\n\n"
+            "입력(A)과 현재 출력(B)을 하나의 뷰어에 겹쳐 표시하고\n"
+            "대각선 분할선으로 나눕니다.\n\n"
+            "가운데 핸들을 드래그하면 선이 이동합니다.\n"
+            "핸들 위나 아래를 드래그하면 각도가 회전합니다.\n"
+            "스크롤 휠로 선을 이동합니다(Shift+스크롤은 미세 조정).\n"
+            "선을 가운데 클릭하면 기본값으로 초기화됩니다."
         )
         btn.setStyleSheet(
             "QPushButton { background-color: #1A1900; color: #808070; "

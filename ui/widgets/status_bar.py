@@ -85,7 +85,7 @@ class StatusBar(QWidget):
         self._progress.setTextVisible(False)
         self._progress.setRange(0, 100)
         self._progress.setValue(0)
-        self._progress.setToolTip("Inference progress for the current job")
+        self._progress.setToolTip("현재 작업의 추론 진행률")
         layout.addWidget(self._progress)
 
         # Frame counter + timer
@@ -117,9 +117,9 @@ class StatusBar(QWidget):
         self._run_btn.setFixedHeight(32)
         self._run_btn.setEnabled(False)
         self._run_btn.setToolTip(
-            "Run AI keying on the selected clip (Ctrl+R).\n"
-            "Requires a READY or COMPLETE clip with alpha hints.\n"
-            "Respects in/out range if set (I/O hotkeys)."
+            "선택한 클립에서 AI 키잉을 실행합니다(Ctrl+R).\n"
+            "AlphaHint가 있는 READY 또는 COMPLETE 클립이 필요합니다.\n"
+            "In/Out 범위가 설정되어 있으면 해당 범위만 처리합니다(I/O 단축키)."
         )
         self._run_mode = "inference"  # "inference" or "extraction"
         self._run_btn.clicked.connect(self._on_run_clicked)
@@ -139,8 +139,8 @@ class StatusBar(QWidget):
         self._resume_btn.setFixedWidth(100)
         self._resume_btn.setFixedHeight(32)
         self._resume_btn.setToolTip(
-            "Resume inference — skip already-processed frames,\n"
-            "fill in remaining gaps across the full clip."
+            "추론을 이어서 실행합니다. 이미 처리된 프레임은 건너뛰고,\n"
+            "전체 클립에서 남은 빈 구간을 채웁니다."
         )
         self._resume_btn.clicked.connect(self.resume_clicked.emit)
         self._resume_btn.hide()
@@ -151,7 +151,7 @@ class StatusBar(QWidget):
         self._stop_btn.setObjectName("stopButton")
         self._stop_btn.setFixedWidth(80)
         self._stop_btn.setFixedHeight(32)
-        self._stop_btn.setToolTip("Stop the current job (Escape).\nAlready-processed frames are kept on disk.")
+        self._stop_btn.setToolTip("현재 작업을 중지합니다(Escape).\n이미 처리된 프레임은 디스크에 유지됩니다.")
         self._stop_btn.clicked.connect(self.stop_clicked.emit)
         self._stop_btn.hide()
         layout.addWidget(self._stop_btn)
@@ -190,15 +190,15 @@ class StatusBar(QWidget):
             self._stop_btn.setText("FORCE STOP")
             self._stop_btn.setFixedWidth(120)
             self._stop_btn.setToolTip(
-                "The current GPU step is blocked.\n"
-                "Force Stop will relaunch the app to break the stuck job."
+                "현재 GPU 단계가 막혀 있습니다.\n"
+                "강제 중지는 앱을 다시 실행해 멈춘 작업을 끊습니다."
             )
         else:
             self._stop_btn.setText("STOP")
             self._stop_btn.setFixedWidth(80)
             self._stop_btn.setToolTip(
-                "Stop the current job (Escape).\n"
-                "Already-processed frames are kept on disk."
+                "현재 작업을 중지합니다(Escape).\n"
+                "이미 처리된 프레임은 디스크에 유지됩니다."
             )
 
     def _on_run_clicked(self) -> None:

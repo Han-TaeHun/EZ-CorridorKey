@@ -23,10 +23,10 @@ def test_color_space_tooltip_explains_preview_and_export_behavior():
 
     tooltip = panel._color_space.toolTip()
 
-    assert "left INPUT viewer" in tooltip
-    assert "future exports" in tooltip
-    assert "does not rewrite those files on disk" in tooltip
-    assert "rerun inference to save new outputs" in tooltip
+    assert "왼쪽 INPUT 뷰어" in tooltip
+    assert "이후 생성하는 내보내기" in tooltip
+    assert "디스크에서 다시 작성되지 않습니다" in tooltip
+    assert "추론을 다시 실행하세요" in tooltip
     assert panel._color_space_label.toolTip() == tooltip
 
 
@@ -36,9 +36,9 @@ def test_live_preview_tooltip_mentions_engine_warmup_and_saved_outputs():
 
     tooltip = panel._live_preview.toolTip()
 
-    assert "first preview change may take a moment" in tooltip
-    assert "inference engine loads" in tooltip
-    assert "do not rewrite exported files on disk" in tooltip
+    assert "첫 미리보기 변경에 시간이 걸릴 수 있습니다" in tooltip
+    assert "추론 엔진을 불러오느라" in tooltip
+    assert "내보낸 파일을 다시 작성하지 않습니다" in tooltip
 
 
 def test_parallel_frames_tooltip_is_cuda_only():
@@ -47,8 +47,8 @@ def test_parallel_frames_tooltip_is_cuda_only():
 
     tooltip = panel._parallel_spin.toolTip()
 
-    assert "CUDA only right now" in tooltip
-    assert "Not currently supported on Apple Silicon" in tooltip
+    assert "현재는 CUDA에서만 지원합니다" in tooltip
+    assert "Apple Silicon에서는 아직 지원하지 않습니다" in tooltip
     assert "Apple Silicon with 64GB+ unified RAM" not in tooltip
 
 

@@ -343,7 +343,7 @@ def _format_manifest_tooltip(clip: ClipEntry) -> str:
     if manifest is None:
         return ""
 
-    lines: list[str] = [f"<b>{clip.name}</b> — Export Settings"]
+    lines: list[str] = [f"<b>{clip.name}</b> - 내보내기 설정"]
 
     # Outputs + formats
     enabled = manifest.get("enabled_outputs", [])
@@ -353,21 +353,21 @@ def _format_manifest_tooltip(clip: ClipEntry) -> str:
         for name in enabled:
             fmt = formats.get(name, "?").upper()
             out_parts.append(f"{name.upper()} ({fmt})")
-        lines.append(f"<b>Outputs:</b> {', '.join(out_parts)}")
+        lines.append(f"<b>출력:</b> {', '.join(out_parts)}")
 
     # Params
     params = manifest.get("params", {})
     if params:
         cs = "Linear" if params.get("input_is_linear") else "sRGB"
-        lines.append(f"<b>Color Space:</b> {cs}")
+        lines.append(f"<b>색 공간:</b> {cs}")
         ds = params.get("despill_strength", 1.0)
-        lines.append(f"<b>Despill:</b> {ds:.0%}")
+        lines.append(f"<b>디스필:</b> {ds:.0%}")
         rs = params.get("refiner_scale", 1.0)
-        lines.append(f"<b>Refiner:</b> {rs:.0%}")
+        lines.append(f"<b>리파이너:</b> {rs:.0%}")
         if params.get("auto_despeckle"):
             sz = params.get("despeckle_size", 400)
-            lines.append(f"<b>Despeckle:</b> On (size {sz})")
+            lines.append(f"<b>디스페클:</b> 켜짐(크기 {sz})")
         else:
-            lines.append(f"<b>Despeckle:</b> Off")
+            lines.append(f"<b>디스페클:</b> 꺼짐")
 
     return "<br>".join(lines)
