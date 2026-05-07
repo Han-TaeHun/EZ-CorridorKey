@@ -243,7 +243,7 @@ class ClipMixin:
             from ui.sounds.audio_manager import UIAudio
             from PySide6.QtWidgets import QMessageBox
             UIAudio.error()
-            QMessageBox.critical(self, "Scan Error", f"Failed to scan clips directory:\n{e}")
+            QMessageBox.critical(self, "스캔 오류", f"클립 디렉터리를 스캔하지 못했습니다:\n{e}")
 
     def _switch_to_workspace(self) -> None:
         """Switch from welcome screen to the 3-panel workspace."""

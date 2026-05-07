@@ -299,7 +299,7 @@ class WorkerMixin:
             )
             dlg.exec()
         else:
-            QMessageBox.critical(self, "Processing Error", f"Clip: {clip_name}\n\n{error_msg}")
+            QMessageBox.critical(self, "처리 오류", f"클립: {clip_name}\n\n{error_msg}")
 
     @Slot()
     def _on_queue_empty(self) -> None:

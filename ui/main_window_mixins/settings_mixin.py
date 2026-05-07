@@ -82,7 +82,7 @@ class SettingsMixin:
         """
         from ui.widgets.setup_wizard import SetupWizard
         dlg = SetupWizard(parent=self)
-        dlg.setWindowTitle("Download Manager")
+        dlg.setWindowTitle("다운로드 관리자")
         dlg.exec()
 
     def _apply_tooltip_setting(self) -> None:
@@ -165,7 +165,7 @@ class SettingsMixin:
     def _show_about(self) -> None:
         app_version = self._get_local_version()
         box = QMessageBox(self)
-        box.setWindowTitle("About EZ-CorridorKey")
+        box.setWindowTitle("EZ-CorridorKey 정보")
         box.setTextFormat(Qt.RichText)
         box.setText(
             f"<h2>EZ-CorridorKey v{app_version}</h2>"
@@ -248,10 +248,10 @@ class SettingsMixin:
 
     @Slot(str)
     def _on_update_available(self, remote_version: str) -> None:
-        self._update_btn.setText(f"Update Available (v{remote_version})")
+        self._update_btn.setText(f"업데이트 가능 (v{remote_version})")
         self._update_btn.setToolTip(
-            f"A new version (v{remote_version}) is available.\n"
-            "Click to save your session and run the updater."
+            f"새 버전(v{remote_version})이 있습니다.\n"
+            "클릭하면 세션을 저장하고 업데이트를 실행합니다."
         )
         # Set minimum width from text metrics to prevent Qt corner widget squish
         self._update_btn.setMinimumWidth(self._update_btn.sizeHint().width())
@@ -267,10 +267,10 @@ class SettingsMixin:
     def _run_script_update(self) -> None:
         """Update via 3-update.sh / 3-update.bat (CLI/dev installs)."""
         reply = QMessageBox.question(
-            self, "Update EZ-CorridorKey",
-            "This will save your session, close the app, and run the updater.\n"
-            "The app will relaunch automatically after updating.\n\n"
-            "Continue?",
+            self, "EZ-CorridorKey 업데이트",
+            "세션을 저장하고 앱을 닫은 뒤 업데이트 프로그램을 실행합니다.\n"
+            "업데이트 후 앱이 자동으로 다시 실행됩니다.\n\n"
+            "계속할까요?",
             QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes,
         )
         if reply != QMessageBox.Yes:
@@ -297,10 +297,9 @@ class SettingsMixin:
         """Update a frozen .app/.exe by downloading from GitHub Releases."""
         import sys as _sys
         reply = QMessageBox.question(
-            self, "Update EZ-CorridorKey",
-            "This will download the latest version, replace the current app,\n"
-            "and relaunch automatically.\n\n"
-            "Your session will be saved. Continue?",
+            self, "EZ-CorridorKey 업데이트",
+            "최신 버전을 내려받아 현재 앱을 교체하고 자동으로 다시 실행합니다.\n\n"
+            "세션은 저장됩니다. 계속할까요?",
             QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes,
         )
         if reply != QMessageBox.Yes:
@@ -309,9 +308,9 @@ class SettingsMixin:
 
         from PySide6.QtWidgets import QProgressDialog
         progress = QProgressDialog(
-            "Downloading update...", "Cancel", 0, 100, self
+            "업데이트를 내려받는 중...", "취소", 0, 100, self
         )
-        progress.setWindowTitle("Updating EZ-CorridorKey")
+        progress.setWindowTitle("EZ-CorridorKey 업데이트 중")
         progress.setMinimumWidth(400)
         progress.setModal(True)
         progress.show()
@@ -334,9 +333,9 @@ class SettingsMixin:
                 asset_ext = "zip"
             else:
                 QMessageBox.warning(
-                    self, "Update",
-                    "Automatic updates are not supported on this platform.\n"
-                    "Please download the latest release from GitHub."
+                    self, "업데이트",
+                    "이 플랫폼에서는 자동 업데이트를 지원하지 않습니다.\n"
+                    "GitHub에서 최신 릴리스를 직접 내려받아 주세요."
                 )
                 progress.close()
                 return
@@ -366,10 +365,10 @@ class SettingsMixin:
 
             if not download_url:
                 QMessageBox.warning(
-                    self, "Update",
-                    f"No {asset_name} found in the latest release.\n"
-                    f"Release: {tag or 'unknown'}\n\n"
-                    "Please download manually from GitHub."
+                    self, "업데이트",
+                    f"최신 릴리스에서 {asset_name} 파일을 찾지 못했습니다.\n"
+                    f"릴리스: {tag or 'unknown'}\n\n"
+                    "GitHub에서 직접 내려받아 주세요."
                 )
                 progress.close()
                 return
@@ -385,7 +384,7 @@ class SettingsMixin:
                     pct = min(100, (block_num * block_size * 100) // total_size)
                     progress.setValue(pct)
                     progress.setLabelText(
-                        f"Downloading update... "
+                        f"업데이트를 내려받는 중... "
                         f"{block_num * block_size // (1024*1024)}/"
                         f"{total_size // (1024*1024)} MB"
                     )
@@ -406,7 +405,7 @@ class SettingsMixin:
 
             verified = False
             if is_signing_key_configured():
-                progress.setLabelText("Verifying update signature...")
+                progress.setLabelText("업데이트 서명을 확인하는 중...")
                 progress.setValue(92)
                 QApplication.processEvents()
 
@@ -436,11 +435,11 @@ class SettingsMixin:
                     except UpdateVerificationError as e:
                         progress.close()
                         QMessageBox.critical(
-                            self, "Update Verification Failed",
-                            f"The update could not be verified and was NOT installed.\n\n"
+                            self, "업데이트 검증 실패",
+                            f"업데이트를 검증할 수 없어 설치하지 않았습니다.\n\n"
                             f"{e}\n\n"
-                            "This may indicate a security issue. Please download "
-                            "the latest release manually from GitHub or Gumroad."
+                            "보안 문제가 있을 수 있습니다. GitHub 또는 Gumroad에서 "
+                            "최신 릴리스를 직접 내려받아 주세요."
                         )
                         shutil.rmtree(tmp_dir, ignore_errors=True)
                         return
@@ -452,7 +451,7 @@ class SettingsMixin:
                         "Skipping signature verification.", tag
                     )
 
-            progress.setLabelText("Installing update...")
+            progress.setLabelText("업데이트를 설치하는 중...")
             progress.setValue(95)
             QApplication.processEvents()
 
@@ -605,7 +604,7 @@ class SettingsMixin:
         except Exception as e:
             progress.close()
             QMessageBox.critical(
-                self, "Update Failed",
-                f"Could not update automatically:\n\n{e}\n\n"
-                "Please download the latest release manually from GitHub."
+                self, "업데이트 실패",
+                f"자동 업데이트를 완료하지 못했습니다:\n\n{e}\n\n"
+                "GitHub에서 최신 릴리스를 직접 내려받아 주세요."
             )

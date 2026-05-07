@@ -115,12 +115,12 @@ class MenuMixin:
 
     def _on_set_project_output_dir(self) -> None:
         if not self._clips_dir:
-            QMessageBox.information(self, "No Project", "Open a project first.")
+            QMessageBox.information(self, "프로젝트 없음", "먼저 프로젝트를 열어 주세요.")
             return
         from backend.project import load_project_output_dir, save_project_output_dir
         current = load_project_output_dir(self._clips_dir)
         folder = QFileDialog.getExistingDirectory(
-            self, "Set Project Output Folder", current or self._clips_dir,
+            self, "프로젝트 출력 폴더 설정", current or self._clips_dir,
         )
         if not folder:
             return

@@ -76,9 +76,10 @@ class ShortcutsMixin:
         if not process_name:
             return
 
+        process_label = "프레임 추출" if process_name == "frame extraction" else "처리 작업"
         reply = QMessageBox.question(
-            self, "Cancel",
-            f"Cancel {process_name}?",
+            self, "취소",
+            f"{process_label}을(를) 취소할까요?",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         )

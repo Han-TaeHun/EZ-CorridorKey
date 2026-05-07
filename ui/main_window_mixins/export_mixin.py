@@ -200,14 +200,14 @@ class ExportMixin:
         """
         if clip is None:
             if self._current_clip is None:
-                QMessageBox.information(self, "No Clip", "Select a clip first.")
+                QMessageBox.information(self, "클립 없음", "먼저 클립을 선택해 주세요.")
                 return
             clip = self._current_clip
 
         if clip.state != ClipState.COMPLETE:
             QMessageBox.warning(
-                self, "Not Complete",
-                f"Clip '{clip.name}' must be COMPLETE to export video.",
+                self, "완료되지 않음",
+                f"'{clip.name}' 클립은 COMPLETE 상태여야 비디오로 내보낼 수 있습니다.",
             )
             return
 
@@ -222,7 +222,7 @@ class ExportMixin:
             elif os.path.isdir(fg_dir) and os.listdir(fg_dir):
                 source_dir = fg_dir
             else:
-                QMessageBox.warning(self, "No Output", "No output frames found to export.")
+                QMessageBox.warning(self, "출력 없음", "내보낼 출력 프레임을 찾지 못했습니다.")
                 return
 
         # Default export to _EXPORTS in the clip's project folder
@@ -237,28 +237,28 @@ class ExportMixin:
             default_out = os.path.join(exports_dir, f"{clip.name}_{subdir_name}")
             out_dir = QFileDialog.getExistingDirectory(
                 self,
-                f"Export Sequence - {subdir_name}",
+                f"시퀀스 내보내기 - {subdir_name}",
                 default_out,
                 QFileDialog.ShowDirsOnly,
             )
             if not out_dir:
                 return
 
-            self._status_bar.set_message(f"Exporting {clip.name}...")
+            self._status_bar.set_message(f"{clip.name} 내보내는 중...")
             try:
                 export_sequence(source_dir, out_dir)
                 self._status_bar.set_message("")
                 QMessageBox.information(
-                    self, "Export Complete",
-                    f"Sequence exported:\n{out_dir}",
+                    self, "내보내기 완료",
+                    f"시퀀스를 내보냈습니다:\n{out_dir}",
                 )
             except Exception as e:
                 self._status_bar.set_message("")
                 from ui.sounds.audio_manager import UIAudio
                 UIAudio.error()
                 QMessageBox.critical(
-                    self, "Export Failed",
-                    f"Failed to export sequence:\n{e}",
+                    self, "내보내기 실패",
+                    f"시퀀스를 내보내지 못했습니다:\n{e}",
                 )
             return
 
@@ -268,7 +268,7 @@ class ExportMixin:
             require_ffmpeg_install(require_probe=True)
         except RuntimeError as exc:
             QMessageBox.critical(
-                self, "FFmpeg Unavailable",
+                self, "FFmpeg 사용 불가",
                 str(exc),
             )
             return
@@ -292,7 +292,7 @@ class ExportMixin:
 
         default_path = os.path.join(exports_dir, default_name)
         out_path, _ = QFileDialog.getSaveFileName(
-            self, "Export Video", default_path,
+            self, "비디오 내보내기", default_path,
             file_filter,
         )
         if not out_path:
@@ -303,7 +303,7 @@ class ExportMixin:
                          if os.path.splitext(f)[1].lower()
                          in ('.png', '.jpg', '.jpeg', '.exr', '.tif', '.tiff')])
         if not frames:
-            QMessageBox.warning(self, "No Frames", "No image frames found in output directory.")
+            QMessageBox.warning(self, "프레임 없음", "출력 디렉터리에서 이미지 프레임을 찾지 못했습니다.")
             return
 
         # Detect pattern from first filename (e.g. frame_000000.png -> frame_%06d.png)
@@ -320,7 +320,7 @@ class ExportMixin:
             pattern = f"frame_%06d{ext}"
             start_number = 0
 
-        self._status_bar.set_message(f"Exporting {clip.name}...")
+        self._status_bar.set_message(f"{clip.name} 내보내는 중...")
 
         try:
             stitch_video(
@@ -332,16 +332,16 @@ class ExportMixin:
             )
             self._status_bar.set_message("")
             QMessageBox.information(
-                self, "Export Complete",
-                f"Video exported:\n{out_path}",
+                self, "내보내기 완료",
+                f"비디오를 내보냈습니다:\n{out_path}",
             )
         except Exception as e:
             self._status_bar.set_message("")
             from ui.sounds.audio_manager import UIAudio
             UIAudio.error()
             QMessageBox.critical(
-                self, "Export Failed",
-                f"Failed to export video:\n{e}",
+                self, "내보내기 실패",
+                f"비디오를 내보내지 못했습니다:\n{e}",
             )
 
     # ── Batch Export Video ──
@@ -357,7 +357,7 @@ class ExportMixin:
 
         complete_clips = [c for c in self._clip_model.clips if c.state == ClipState.COMPLETE]
         if not complete_clips:
-            QMessageBox.information(self, "Nothing to Export", "No COMPLETE clips to export.")
+            QMessageBox.information(self, "내보낼 항목 없음", "내보낼 COMPLETE 클립이 없습니다.")
             return
 
         # Gather all available exports
@@ -372,19 +372,19 @@ class ExportMixin:
                     available.append((clip, src, subdir))
 
         if not available:
-            QMessageBox.information(self, "Nothing to Export", "No output frames found.")
+            QMessageBox.information(self, "내보낼 항목 없음", "출력 프레임을 찾지 못했습니다.")
             return
 
         # ── Selection Dialog ──
         dlg = QDialog(self)
-        dlg.setWindowTitle("Export All Videos")
+        dlg.setWindowTitle("모든 비디오 내보내기")
         dlg.setMinimumWidth(450)
         layout = QVBoxLayout(dlg)
 
-        layout.addWidget(QLabel("Select which outputs to export as video:"))
+        layout.addWidget(QLabel("비디오로 내보낼 출력을 선택하세요:"))
 
         tree = QTreeWidget()
-        tree.setHeaderLabels(["Clip / Output", "Format", "Frames"])
+        tree.setHeaderLabels(["클립 / 출력", "형식", "프레임"])
         tree.setRootIsDecorated(True)
         tree.setColumnWidth(0, 260)
         tree.setColumnWidth(1, 120)
@@ -412,7 +412,7 @@ class ExportMixin:
             combo = QComboBox()
             is_seq_input = bool(clip.input_asset and clip.input_asset.asset_type == "sequence")
             if is_seq_input:
-                combo.addItems(["Image Sequence (copy)"])
+                combo.addItems(["이미지 시퀀스(복사)"])
                 combo.setEnabled(False)
             else:
                 combo.addItems(["MOV ProRes 4444 (alpha)", "WebM VP9 (alpha)", "MP4"])
@@ -440,7 +440,7 @@ class ExportMixin:
                 if child.text(0) == subdir and child.checkState(0) == Qt.Checked:
                     combo = format_combos.get((clip.name, subdir))
                     fmt_text = combo.currentText() if combo else ""
-                    if "Image Sequence" in fmt_text:
+                    if "Image Sequence" in fmt_text or "이미지 시퀀스" in fmt_text:
                         ext = None
                     elif "MOV" in fmt_text:
                         ext = ".mov"
@@ -464,14 +464,14 @@ class ExportMixin:
             try:
                 require_ffmpeg_install(require_probe=True)
             except RuntimeError as exc:
-                QMessageBox.critical(self, "FFmpeg Unavailable", str(exc))
+                QMessageBox.critical(self, "FFmpeg 사용 불가", str(exc))
                 return
 
         # ── Export with progress ──
         progress = QProgressDialog(
-            "Exporting...", "Cancel", 0, len(selected), self,
+            "내보내는 중...", "취소", 0, len(selected), self,
         )
-        progress.setWindowTitle("Batch Export")
+        progress.setWindowTitle("일괄 내보내기")
         progress.setWindowModality(Qt.WindowModal)
         progress.setMinimumDuration(0)
 
@@ -480,7 +480,7 @@ class ExportMixin:
         for i, (clip, src, out_path, subdir, ext) in enumerate(selected):
             if progress.wasCanceled():
                 break
-            progress.setLabelText(f"Exporting {clip.name} / {subdir}...")
+            progress.setLabelText(f"{clip.name} / {subdir} 내보내는 중...")
             progress.setValue(i)
 
             if ext is None:
@@ -528,17 +528,17 @@ class ExportMixin:
 
         progress.setValue(len(selected))
 
-        summary = f"Exported {len(exported)} item(s)."
+        summary = f"{len(exported)}개 항목을 내보냈습니다."
         if failed:
-            summary += f"\n\n{len(failed)} failed:\n" + "\n".join(failed[:5])
+            summary += f"\n\n{len(failed)}개 실패:\n" + "\n".join(failed[:5])
         if exported:
             from ui.sounds.audio_manager import UIAudio
             UIAudio.frame_extract_done()
-            QMessageBox.information(self, "Batch Export Complete", summary)
+            QMessageBox.information(self, "일괄 내보내기 완료", summary)
         elif failed:
             from ui.sounds.audio_manager import UIAudio
             UIAudio.error()
-            QMessageBox.warning(self, "Batch Export", summary)
+            QMessageBox.warning(self, "일괄 내보내기", summary)
 
     # ── View Controls ──
 

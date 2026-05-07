@@ -32,16 +32,16 @@ class ModelRunMixin:
         total = (self._current_clip.input_asset.frame_count
                  if self._current_clip.input_asset else 0)
         msg = QMessageBox(self)
-        msg.setWindowTitle("Partial Alpha Found")
+        msg.setWindowTitle("일부 알파 발견")
         msg.setText(
-            f"Found {len(existing)}/{total} alpha frames from a previous run."
+            f"이전 실행에서 생성된 알파 프레임 {len(existing)}/{total}개를 찾았습니다."
         )
         msg.setInformativeText(
-            "Resume will skip completed frames.\n"
-            "Regenerate will redo all frames from scratch."
+            "이어 하기는 완료된 프레임을 건너뜁니다.\n"
+            "재생성은 모든 프레임을 처음부터 다시 처리합니다."
         )
-        resume_btn = msg.addButton("Resume", QMessageBox.AcceptRole)
-        regen_btn = msg.addButton("Regenerate", QMessageBox.DestructiveRole)
+        resume_btn = msg.addButton("이어 하기", QMessageBox.AcceptRole)
+        regen_btn = msg.addButton("재생성", QMessageBox.DestructiveRole)
         msg.addButton(QMessageBox.Cancel)
         msg.setDefaultButton(resume_btn)
         msg.exec()
@@ -101,8 +101,8 @@ class ModelRunMixin:
         if not self._clip_has_videomama_ready_mask(self._current_clip):
             QMessageBox.information(
                 self,
-                "Track Mask First",
-                "Paint prompts and run Track Mask before using VideoMaMa.",
+                "Track Mask 먼저 실행",
+                "VideoMaMa를 사용하기 전에 페인트 프롬프트를 칠하고 Track Mask를 실행해 주세요.",
             )
             return
 
@@ -124,9 +124,9 @@ class ModelRunMixin:
         if not self._clip_has_videomama_ready_mask(self._current_clip):
             QMessageBox.information(
                 self,
-                "Track Mask First",
-                "MatAnyone2 requires a tracked mask on frame 0.\n\n"
-                "Paint prompts and run Track Mask before using MatAnyone2.",
+                "Track Mask 먼저 실행",
+                "MatAnyone2는 0번 프레임에 추적된 마스크가 필요합니다.\n\n"
+                "MatAnyone2를 사용하기 전에 페인트 프롬프트를 칠하고 Track Mask를 실행해 주세요.",
             )
             return
 

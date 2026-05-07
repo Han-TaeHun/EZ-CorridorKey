@@ -59,7 +59,7 @@ class KeyBindButton(QPushButton):
 
     def _start_recording(self) -> None:
         self._recording = True
-        self.setText("Press a key...")
+        self.setText("키를 누르세요...")
         self.setStyleSheet(self._STYLE_RECORDING)
         self.grabKeyboard()
 
@@ -91,9 +91,9 @@ class KeyBindButton(QPushButton):
                 if d.action_id in conflicts
             )
             reply = QMessageBox.warning(
-                self, "Shortcut Conflict",
-                f'"{key_str}" is already assigned to:\n{conflict_names}\n\n'
-                "Reassign anyway? The conflicting binding will be cleared.",
+                self, "단축키 충돌",
+                f'"{key_str}" 단축키는 이미 다음 기능에 지정되어 있습니다:\n{conflict_names}\n\n'
+                "그래도 다시 지정할까요? 충돌하는 기존 단축키는 비워집니다.",
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No,
             )
@@ -131,7 +131,7 @@ class HotkeysDialog(QDialog):
         # Snapshot for cancel/revert
         self._original_overrides = registry.snapshot_overrides()
 
-        self.setWindowTitle("Hotkeys")
+        self.setWindowTitle("단축키")
         self.setMinimumSize(540, 480)
         self.setModal(True)
         self._build_ui()
@@ -307,8 +307,8 @@ class HotkeysDialog(QDialog):
 
     def _reset_all(self) -> None:
         reply = QMessageBox.question(
-            self, "Reset All Shortcuts",
-            "Reset all shortcuts to their default values?",
+            self, "모든 단축키 초기화",
+            "모든 단축키를 기본값으로 되돌릴까요?",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         )

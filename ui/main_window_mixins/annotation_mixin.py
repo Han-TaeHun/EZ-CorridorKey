@@ -84,8 +84,8 @@ class AnnotationMixin:
         model = iv.annotation_model
         if not model.has_annotations():
             QMessageBox.information(
-                self, "No Paint Strokes",
-                "Paint green (1) and red (2) strokes on frames first.",
+                self, "페인트 스트로크 없음",
+                "먼저 프레임에 전경(1)과 배경(2) 스트로크를 칠해 주세요.",
             )
             return
 
@@ -107,10 +107,10 @@ class AnnotationMixin:
         alpha_dir = os.path.join(clip.root_path, "AlphaHint")
         if os.path.isdir(alpha_dir):
             reply = QMessageBox.question(
-                self, "Replace Existing Alpha?",
-                "This clip already has an AlphaHint (from GVM or a previous run).\n\n"
-                "Tracking a new mask sequence will replace that alpha hint.\n\n"
-                "Remove existing AlphaHint and proceed?",
+                self, "기존 알파 교체",
+                "이 클립에는 이미 AlphaHint가 있습니다. GVM 또는 이전 실행에서 생성된 알파일 수 있습니다.\n\n"
+                "새 마스크 시퀀스를 추적하면 기존 알파 힌트가 교체됩니다.\n\n"
+                "기존 AlphaHint를 삭제하고 계속할까요?",
             )
             if reply != QMessageBox.Yes:
                 return False
@@ -153,10 +153,10 @@ class AnnotationMixin:
         has_frame = model.has_annotations(stem_idx)
 
         box = QMessageBox(self)
-        box.setWindowTitle("Clear Paint Strokes")
-        box.setText("What would you like to clear?")
-        frame_btn = box.addButton("This Frame", QMessageBox.AcceptRole)
-        clip_btn = box.addButton("Entire Clip", QMessageBox.DestructiveRole)
+        box.setWindowTitle("페인트 스트로크 삭제")
+        box.setText("무엇을 삭제할까요?")
+        frame_btn = box.addButton("현재 프레임", QMessageBox.AcceptRole)
+        clip_btn = box.addButton("전체 클립", QMessageBox.DestructiveRole)
         box.addButton(QMessageBox.Cancel)
 
         # Disable "This Frame" if current frame has no annotations

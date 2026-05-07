@@ -44,7 +44,7 @@ class DiagnosticDialog(QDialog):
         parent: QWidget | None = None,
     ):
         super().__init__(parent)
-        self.setWindowTitle(f"Diagnostic: {diagnostic.title}")
+        self.setWindowTitle(f"진단: {diagnostic.title}")
         self.setMinimumWidth(540)
         self.setMinimumHeight(320)
         self.setModal(True)
@@ -105,7 +105,7 @@ class DiagnosticDialog(QDialog):
         root.addWidget(steps_area, stretch=1)
 
         # ── Error detail (collapsed) ──
-        error_lbl = QLabel(f"Error: {error_msg}")
+        error_lbl = QLabel(f"오류: {error_msg}")
         error_lbl.setWordWrap(True)
         error_lbl.setTextInteractionFlags(
             Qt.TextInteractionFlag.TextSelectableByMouse
@@ -119,7 +119,7 @@ class DiagnosticDialog(QDialog):
         btn_row = QHBoxLayout()
         btn_row.addStretch()
 
-        report_btn = QPushButton("Report Issue on GitHub")
+        report_btn = QPushButton("GitHub에 이슈 보고")
         report_btn.setStyleSheet(
             "QPushButton { background: #333; color: #ccc; padding: 6px 14px; }"
         )
@@ -156,7 +156,7 @@ class StartupDiagnosticDialog(QDialog):
         parent: QWidget | None = None,
     ):
         super().__init__(parent)
-        self.setWindowTitle("Startup Diagnostics")
+        self.setWindowTitle("시작 진단")
         self.setMinimumWidth(560)
         self.setMinimumHeight(300)
         self.setModal(True)
@@ -165,8 +165,8 @@ class StartupDiagnosticDialog(QDialog):
         root.setSpacing(12)
 
         header = QLabel(
-            "EZ-CorridorKey detected issues with your environment that "
-            "may prevent some features from working correctly."
+            "EZ-CorridorKey가 일부 기능의 정상 동작을 막을 수 있는 "
+            "환경 문제를 감지했습니다."
         )
         header.setWordWrap(True)
         header.setStyleSheet("QLabel { color: #ccc; font-size: 13px; }")
@@ -192,7 +192,7 @@ class StartupDiagnosticDialog(QDialog):
         # ── Buttons ──
         btn_row = QHBoxLayout()
         btn_row.addStretch()
-        ok_btn = QPushButton("Continue Anyway")
+        ok_btn = QPushButton("그래도 계속")
         ok_btn.setDefault(True)
         ok_btn.clicked.connect(self.accept)
         btn_row.addWidget(ok_btn)

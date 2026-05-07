@@ -333,12 +333,12 @@ class StatusBar(QWidget):
         self._warning_count += 1
         if message:
             self._warnings.append(message)
-        label = f"{self._warning_count} warning{'s' if self._warning_count != 1 else ''}"
+        label = f"경고 {self._warning_count}개"
         self._warn_btn.setText(label)
         self._warn_btn.show()
         if self._warnings:
             latest = _wrap_tooltip_text(self._warnings[-1])
-            self._warn_btn.setToolTip(f"Latest:\n{latest}\n\nClick for all warnings")
+            self._warn_btn.setToolTip(f"최근 경고:\n{latest}\n\n클릭하면 모든 경고를 볼 수 있습니다.")
 
     def set_message(self, text: str) -> None:
         """Show a status message in the frame label area."""
@@ -390,7 +390,7 @@ class StatusBar(QWidget):
     def _build_warnings_dialog(self) -> QDialog:
         """Build the warnings dialog."""
         dlg = QDialog(self._dialog_parent())
-        dlg.setWindowTitle(f"Warnings ({self._warning_count})")
+        dlg.setWindowTitle(f"경고 ({self._warning_count})")
         dlg.setModal(True)
         dlg.setWindowModality(Qt.WindowModal)
         dlg.setMinimumSize(500, 300)

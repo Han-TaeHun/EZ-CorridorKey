@@ -177,18 +177,18 @@ class IOTrayPanel(IOTrayActionsMixin, QWidget):
         clips_with_range = [c for c in self._model.clips if c.in_out_range is not None]
         if not clips_with_range:
             QMessageBox.information(
-                self, "No Markers",
-                "No clips have in/out markers set.",
+                self, "마커 없음",
+                "In/Out 마커가 설정된 클립이 없습니다.",
             )
             return
 
         n = len(clips_with_range)
         # First confirmation
         result = QMessageBox.question(
-            self, "Reset In/Out Markers",
-            f"This will clear in/out markers on {n} clip{'s' if n > 1 else ''}.\n\n"
-            "All clips will revert to full-clip processing.\n"
-            "Continue?",
+            self, "In/Out 마커 초기화",
+            f"{n}개 클립의 In/Out 마커를 삭제합니다.\n\n"
+            "모든 클립이 전체 클립 처리로 돌아갑니다.\n"
+            "계속할까요?",
             QMessageBox.Yes | QMessageBox.No, QMessageBox.No,
         )
         if result != QMessageBox.Yes:
@@ -196,9 +196,9 @@ class IOTrayPanel(IOTrayActionsMixin, QWidget):
 
         # Second confirmation
         result2 = QMessageBox.warning(
-            self, "Confirm Reset",
-            f"Are you sure? This cannot be undone.\n\n"
-            f"Clearing in/out markers on {n} clip{'s' if n > 1 else ''}.",
+            self, "초기화 확인",
+            f"정말 진행할까요? 이 작업은 되돌릴 수 없습니다.\n\n"
+            f"{n}개 클립의 In/Out 마커를 삭제합니다.",
             QMessageBox.Yes | QMessageBox.No, QMessageBox.No,
         )
         if result2 != QMessageBox.Yes:
@@ -209,7 +209,7 @@ class IOTrayPanel(IOTrayActionsMixin, QWidget):
 
     def _import_folder(self) -> None:
         dir_path = QFileDialog.getExistingDirectory(
-            self, "Select Clips Directory", "",
+            self, "클립 디렉터리 선택", "",
             QFileDialog.ShowDirsOnly,
         )
         if dir_path:
@@ -217,7 +217,7 @@ class IOTrayPanel(IOTrayActionsMixin, QWidget):
 
     def _import_videos(self) -> None:
         paths, _ = QFileDialog.getOpenFileNames(
-            self, "Select Video Files", "",
+            self, "비디오 파일 선택", "",
             VIDEO_FILE_FILTER,
         )
         if paths:
@@ -225,7 +225,7 @@ class IOTrayPanel(IOTrayActionsMixin, QWidget):
 
     def _import_image_sequence(self) -> None:
         dir_path = QFileDialog.getExistingDirectory(
-            self, "Select Image Sequence Folder", "",
+            self, "이미지 시퀀스 폴더 선택", "",
             QFileDialog.ShowDirsOnly,
         )
         if dir_path:

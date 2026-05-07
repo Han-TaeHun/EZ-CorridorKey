@@ -208,7 +208,7 @@ class RecentProjectsPanel(QWidget):
 
         current_name = get_display_name(workspace_path)
         new_name, ok = QInputDialog.getText(
-            self, "Rename Project", "Project name:", text=current_name,
+            self, "프로젝트 이름 변경", "프로젝트 이름:", text=current_name,
         )
         if ok and new_name.strip() and new_name.strip() != current_name:
             new_name = new_name.strip()
@@ -235,15 +235,15 @@ class RecentProjectsPanel(QWidget):
             return
 
         msg = QMessageBox(self)
-        msg.setWindowTitle("Remove Project")
-        msg.setText(f"Remove \"{name}\" from recent projects?")
+        msg.setWindowTitle("프로젝트 제거")
+        msg.setText(f"최근 프로젝트에서 \"{name}\"을(를) 제거할까요?")
         msg.setInformativeText(
-            "Remove from List: hides it from recents (files stay on disk).\n"
-            "Delete from Disk: permanently deletes the project folder."
+            "목록에서만 제거: 최근 목록에서만 숨기며 파일은 디스크에 남습니다.\n"
+            "디스크에서 삭제: 프로젝트 폴더를 영구 삭제합니다."
         )
 
-        remove_btn = msg.addButton("Remove from List", QMessageBox.AcceptRole)
-        delete_btn = msg.addButton("Delete from Disk", QMessageBox.DestructiveRole)
+        remove_btn = msg.addButton("목록에서만 제거", QMessageBox.AcceptRole)
+        delete_btn = msg.addButton("디스크에서 삭제", QMessageBox.DestructiveRole)
         msg.addButton(QMessageBox.Cancel)
         msg.setDefaultButton(remove_btn)
 
@@ -257,8 +257,8 @@ class RecentProjectsPanel(QWidget):
         elif clicked == delete_btn:
             # Second confirmation with path shown
             confirm = QMessageBox.warning(
-                self, "Confirm Delete",
-                f"Permanently delete this project folder?\n\n{workspace_path}",
+                self, "삭제 확인",
+                f"이 프로젝트 폴더를 영구 삭제할까요?\n\n{workspace_path}",
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No,
             )
@@ -280,8 +280,8 @@ class RecentProjectsPanel(QWidget):
                 except OSError as e:
                     logger.error(f"Failed to delete project: {e}")
                     QMessageBox.warning(
-                        self, "Delete Failed",
-                        f"Could not delete project:\n{e}",
+                        self, "삭제 실패",
+                        f"프로젝트를 삭제하지 못했습니다:\n{e}",
                     )
                 self.project_deleted.emit(workspace_path)
                 self.refresh()

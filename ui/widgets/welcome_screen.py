@@ -172,7 +172,7 @@ class WelcomeScreen(QWidget):
             "All Files (*)"
         )
         paths, _ = QFileDialog.getOpenFileNames(
-            self, "Select Media Files", "",
+            self, "미디어 파일 선택", "",
             media_filter,
         )
         if paths:

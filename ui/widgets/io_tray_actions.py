@@ -182,7 +182,7 @@ class IOTrayActionsMixin:
         from backend.project import save_custom_output_dir
         start = clip.custom_output_dir or clip.output_dir
         path = QFileDialog.getExistingDirectory(
-            self, f"Output Directory for '{clip.name}'", start,
+            self, f"'{clip.name}' 출력 디렉터리", start,
             QFileDialog.ShowDirsOnly,
         )
         if not path:
@@ -213,7 +213,7 @@ class IOTrayActionsMixin:
 
         current = clip.name
         new_name, ok = QInputDialog.getText(
-            self, "Rename Clip", "New name:", text=current,
+            self, "클립 이름 변경", "새 이름:", text=current,
         )
         if not ok or not new_name.strip() or new_name.strip() == current:
             return
@@ -229,11 +229,11 @@ class IOTrayActionsMixin:
         """Delete VideoMamaMaskHint folder from disk for one or more clips."""
         names = ", ".join(c.name for c in clips[:3])
         if len(clips) > 3:
-            names += f" (+{len(clips) - 3} more)"
+            names += f" (+{len(clips) - 3}개 더)"
         confirm = QMessageBox.question(
-            self, "Clear Mask",
-            f"Delete tracked masks for {len(clips)} clip(s)?\n{names}\n\n"
-            "This will remove all SAM2 mask frames from disk.",
+            self, "마스크 삭제",
+            f"{len(clips)}개 클립의 추적 마스크를 삭제할까요?\n{names}\n\n"
+            "디스크에서 모든 SAM2 마스크 프레임이 삭제됩니다.",
             QMessageBox.Yes | QMessageBox.No, QMessageBox.No,
         )
         if confirm != QMessageBox.Yes:
@@ -293,11 +293,11 @@ class IOTrayActionsMixin:
         """Delete masks, alpha hints, and outputs for one or more clips."""
         names = ", ".join(c.name for c in clips[:3])
         if len(clips) > 3:
-            names += f" (+{len(clips) - 3} more)"
+            names += f" (+{len(clips) - 3}개 더)"
         confirm = QMessageBox.question(
-            self, "Clear All",
-            f"Remove ALL generated data for {len(clips)} clip(s)?\n{names}\n\n"
-            "This will delete masks, alpha hints, and all output frames.",
+            self, "모두 삭제",
+            f"{len(clips)}개 클립의 모든 생성 데이터를 삭제할까요?\n{names}\n\n"
+            "마스크, 알파 힌트, 모든 출력 프레임이 삭제됩니다.",
             QMessageBox.Yes | QMessageBox.No, QMessageBox.No,
         )
         if confirm != QMessageBox.Yes:
@@ -338,11 +338,11 @@ class IOTrayActionsMixin:
         """Delete AlphaHint folder from disk for one or more clips."""
         names = ", ".join(c.name for c in clips[:3])
         if len(clips) > 3:
-            names += f" (+{len(clips) - 3} more)"
+            names += f" (+{len(clips) - 3}개 더)"
         confirm = QMessageBox.question(
-            self, "Clear Alpha",
-            f"Delete AlphaHint for {len(clips)} clip(s)?\n{names}\n\n"
-            "This will remove all generated alpha hint frames from disk.",
+            self, "알파 삭제",
+            f"{len(clips)}개 클립의 AlphaHint를 삭제할까요?\n{names}\n\n"
+            "디스크에서 모든 생성 알파 힌트 프레임이 삭제됩니다.",
             QMessageBox.Yes | QMessageBox.No, QMessageBox.No,
         )
         if confirm != QMessageBox.Yes:
@@ -370,11 +370,11 @@ class IOTrayActionsMixin:
         """Clear output files for one or more clips."""
         names = ", ".join(c.name for c in clips[:3])
         if len(clips) > 3:
-            names += f" (+{len(clips) - 3} more)"
+            names += f" (+{len(clips) - 3}개 더)"
         confirm = QMessageBox.question(
-            self, "Clear Outputs",
-            f"Remove all output files for {len(clips)} clip(s)?\n{names}\n\n"
-            "This will delete FG, Matte, Comp, and Processed frames.",
+            self, "출력 삭제",
+            f"{len(clips)}개 클립의 모든 출력 파일을 삭제할까요?\n{names}\n\n"
+            "FG, Matte, Comp, Processed 프레임이 삭제됩니다.",
             QMessageBox.Yes | QMessageBox.No, QMessageBox.No,
         )
         if confirm != QMessageBox.Yes:
@@ -399,22 +399,22 @@ class IOTrayActionsMixin:
     def _remove_dialog(self, clips: list[ClipEntry]) -> None:
         """Show remove confirmation dialog with Remove from List / Delete from Disk options."""
         n = len(clips)
-        title = f"Remove {n} clip{'s' if n > 1 else ''}?"
+        title = f"클립 {n}개 제거"
 
         paths_text = "\n".join(c.root_path for c in clips[:5])
         if n > 5:
-            paths_text += f"\n... and {n - 5} more"
+            paths_text += f"\n... 외 {n - 5}개"
 
         msg = QMessageBox(self)
         msg.setWindowTitle(title)
         msg.setIcon(QMessageBox.Warning)
         msg.setText(
-            f"How would you like to remove {n} clip{'s' if n > 1 else ''}?"
+            f"{n}개 클립을 어떻게 제거할까요?"
         )
         msg.setInformativeText(paths_text)
 
-        btn_list = msg.addButton("Remove from List", QMessageBox.AcceptRole)
-        btn_disk = msg.addButton("Delete from Disk", QMessageBox.DestructiveRole)
+        btn_list = msg.addButton("목록에서만 제거", QMessageBox.AcceptRole)
+        btn_disk = msg.addButton("디스크에서 삭제", QMessageBox.DestructiveRole)
         msg.addButton(QMessageBox.Cancel)
 
         msg.exec()

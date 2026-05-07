@@ -34,7 +34,7 @@ class ImportMixin:
         so only that project's clips appear in the browser (project isolation).
         """
         if not os.path.isdir(workspace_path):
-            QMessageBox.warning(self, "Missing", f"Workspace no longer exists:\n{workspace_path}")
+            QMessageBox.warning(self, "폴더 없음", f"작업 폴더가 더 이상 존재하지 않습니다:\n{workspace_path}")
             self._recent_store.remove(workspace_path)
             self._welcome.refresh_recents()
             return
@@ -112,8 +112,8 @@ class ImportMixin:
         display_name = None
         if len(video_paths) > 1:
             name, ok = QInputDialog.getText(
-                self, "Name Your Project",
-                "Give your project a name:",
+                self, "프로젝트 이름",
+                "프로젝트 이름을 입력하세요:",
             )
             if not ok:
                 return  # user cancelled
@@ -137,7 +137,7 @@ class ImportMixin:
     def _on_import_folder(self) -> None:
         """File -> Import Clips -> Import Folder — context-aware."""
         dir_path = QFileDialog.getExistingDirectory(
-            self, "Select Clips Directory", "",
+            self, "클립 디렉터리 선택", "",
             QFileDialog.ShowDirsOnly,
         )
         if not dir_path:
@@ -152,7 +152,7 @@ class ImportMixin:
     def _on_import_videos(self) -> None:
         """File -> Import Clips -> Import Video(s) — context-aware."""
         paths, _ = QFileDialog.getOpenFileNames(
-            self, "Select Video Files", "",
+            self, "비디오 파일 선택", "",
             VIDEO_FILE_FILTER,
         )
         if not paths:
@@ -167,7 +167,7 @@ class ImportMixin:
     def _on_import_image_sequence(self) -> None:
         """File -> Import Clips -> Import Image Sequence — context-aware."""
         dir_path = QFileDialog.getExistingDirectory(
-            self, "Select Image Sequence Folder", "",
+            self, "이미지 시퀀스 폴더 선택", "",
             QFileDialog.ShowDirsOnly,
         )
         if not dir_path:
@@ -177,8 +177,8 @@ class ImportMixin:
         if not self._clips_dir:
             folder_name = os.path.basename(dir_path.rstrip("/\\"))
             name, ok = QInputDialog.getText(
-                self, "Name Your Project",
-                "Give your project a name:",
+                self, "프로젝트 이름",
+                "프로젝트 이름을 입력하세요:",
                 text=folder_name,
             )
             if not ok:
@@ -200,8 +200,8 @@ class ImportMixin:
 
         if not videos and not is_seq:
             QMessageBox.information(
-                self, "No Media",
-                "No video files or image sequences found in that folder."
+                self, "미디어 없음",
+                "선택한 폴더에서 비디오 파일이나 이미지 시퀀스를 찾지 못했습니다."
             )
             return
 
@@ -251,8 +251,8 @@ class ImportMixin:
         if skipped and not new_videos and not restored:
             names = ", ".join(f'"{s}"' for s in skipped[:3])
             QMessageBox.information(
-                self, "Already Imported",
-                f"All selected videos are already in the project ({names})."
+                self, "이미 가져옴",
+                f"선택한 비디오는 모두 이미 프로젝트에 있습니다 ({names})."
             )
             return
 
@@ -285,9 +285,9 @@ class ImportMixin:
 
         if not folder_has_image_sequence(folder_path):
             QMessageBox.information(
-                self, "No Images",
-                "No image files found in that folder.\n\n"
-                "Supported formats: PNG, JPG, EXR, TIF, TIFF, BMP, DPX"
+                self, "이미지 없음",
+                "선택한 폴더에서 이미지 파일을 찾지 못했습니다.\n\n"
+                "지원 형식: PNG, JPG, EXR, TIF, TIFF, BMP, DPX"
             )
             return
 
@@ -296,8 +296,8 @@ class ImportMixin:
             existing = find_clip_by_source(self._clips_dir, folder_path)
             if existing:
                 QMessageBox.information(
-                    self, "Already Imported",
-                    f"This sequence is already in the project as \"{existing}\"."
+                    self, "이미 가져옴",
+                    f"이 시퀀스는 이미 \"{existing}\" 이름으로 프로젝트에 있습니다."
                 )
                 return
             # Restore if it was previously removed
@@ -316,11 +316,11 @@ class ImportMixin:
             if len(dupes) > 5:
                 sample += f" ... ({len(dupes)} total)"
             QMessageBox.warning(
-                self, "Duplicate Filenames",
-                f"Found files with the same name but different extensions:\n"
+                self, "중복 파일명",
+                f"같은 이름에 확장자만 다른 파일이 있습니다:\n"
                 f"{sample}\n\n"
-                f"This would cause output file conflicts. Please use one format "
-                f"per sequence folder."
+                f"이 상태로는 출력 파일 충돌이 발생할 수 있습니다. "
+                f"시퀀스 폴더 하나에는 한 가지 형식만 사용해 주세요."
             )
             return
 
@@ -361,8 +361,8 @@ class ImportMixin:
         if not self._clips_dir:
             folder_name = os.path.basename(parent_folder.rstrip("/\\"))
             name, ok = QInputDialog.getText(
-                self, "Name Your Project",
-                "Give your project a name:",
+                self, "프로젝트 이름",
+                "프로젝트 이름을 입력하세요:",
                 text=folder_name,
             )
             if not ok:
@@ -375,18 +375,18 @@ class ImportMixin:
             folder_count = count_sequence_frames(parent_folder)
 
             msg = QMessageBox(self)
-            msg.setWindowTitle("Import Image Frames")
+            msg.setWindowTitle("이미지 프레임 가져오기")
             msg.setText(
-                f"You dropped {n} image file(s).\n"
-                f"The source folder contains {folder_count} image(s) total."
+                f"이미지 파일 {n}개를 드롭했습니다.\n"
+                f"원본 폴더에는 총 {folder_count}개의 이미지가 있습니다."
             )
-            msg.setInformativeText("How would you like to import?")
+            msg.setInformativeText("어떤 방식으로 가져올까요?")
 
             btn_just_these = msg.addButton(
-                f"Copy Just These {n}", QMessageBox.AcceptRole,
+                f"선택한 {n}개만 복사", QMessageBox.AcceptRole,
             )
             btn_full_seq = msg.addButton(
-                "Import Full Sequence", QMessageBox.ActionRole,
+                "전체 시퀀스 가져오기", QMessageBox.ActionRole,
             )
             msg.addButton(QMessageBox.Cancel)
             msg.setDefaultButton(btn_full_seq)
@@ -473,8 +473,8 @@ class ImportMixin:
 
         if not videos and not is_seq:
             QMessageBox.information(
-                self, "No Media",
-                "No video files or image sequences found in that folder."
+                self, "미디어 없음",
+                "선택한 폴더에서 비디오 파일이나 이미지 시퀀스를 찾지 못했습니다."
             )
             return
 

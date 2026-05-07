@@ -258,13 +258,13 @@ class MainWindow(
             return True
         reply = QMessageBox.warning(
             self,
-            f"{feature_name} — Mac Performance Warning",
-            "GPU-intensive features (SAM2, GVM, VideoMaMa, MatAnyone2) "
-            "are very slow on Mac (Apple Silicon MPS).\n\n"
-            "This may take hours for longer clips and could freeze your system.\n\n"
-            "Recommendation: Import pre-made alpha mattes from After Effects, "
-            "DaVinci Resolve, or Nuke instead.\n\n"
-            "Continue anyway? (This warning won't appear again this session.)",
+            f"{feature_name} Mac 성능 경고",
+            "GPU 사용량이 큰 기능(SAM2, GVM, VideoMaMa, MatAnyone2)은 "
+            "Mac(Apple Silicon MPS)에서 매우 느립니다.\n\n"
+            "긴 클립은 몇 시간이 걸릴 수 있고 시스템이 멈춘 것처럼 보일 수 있습니다.\n\n"
+            "권장: After Effects, DaVinci Resolve, Nuke 등에서 만든 "
+            "알파 매트를 가져와 사용하는 것이 좋습니다.\n\n"
+            "그래도 계속할까요? 이 경고는 현재 세션에서 다시 표시되지 않습니다.",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         )

@@ -75,18 +75,18 @@ class CancelMixin:
             self._status_bar.set_running(True)
             self._status_bar.set_stop_button_mode(force=True)
             self._status_bar.set_message(
-                "Stop requested — waiting for current GPU step. "
-                "Press FORCE STOP to relaunch if it stays stuck."
+                "중지 요청됨: 현재 GPU 단계가 끝나기를 기다리는 중입니다. "
+                "멈춘 상태가 계속되면 FORCE STOP을 눌러 앱을 재시작하세요."
             )
         else:
             self._force_stop_armed = False
             self._status_bar.set_running(False)
-            self._status_bar.set_message("Cancelled queued work.")
+            self._status_bar.set_message("대기 중인 작업을 취소했습니다.")
         self._queue_panel.refresh()
         logger.info("Processing cancelled by user")
         if is_videomama:
-            _Toast(self, "GPU is finishing the current chunk.\n"
-                         "VideoMaMa will stop after it completes.",
+            _Toast(self, "GPU가 현재 청크를 마무리하는 중입니다.\n"
+                         "VideoMaMa는 이 청크가 끝난 뒤 중지됩니다.",
                    center=True)
 
     def _force_restart_app(self) -> None:
@@ -126,14 +126,14 @@ class CancelMixin:
             logger.exception(f"Force stop relaunch failed: {e}")
             QMessageBox.critical(
                 self,
-                "Force Stop Failed",
-                "Could not relaunch the app automatically.\n\n"
-                "Please close and reopen EZ-CorridorKey manually.",
+                "강제 중지 실패",
+                "앱을 자동으로 다시 실행하지 못했습니다.\n\n"
+                "EZ-CorridorKey를 직접 닫았다가 다시 열어 주세요.",
             )
             return
 
         self._skip_shutdown_cleanup = True
-        self._status_bar.set_message("Force restarting...")
+        self._status_bar.set_message("강제 재시작 중...")
         QApplication.instance().quit()
 
     @Slot()
@@ -147,11 +147,11 @@ class CancelMixin:
 
         if self._force_stop_armed:
             reply = QMessageBox.question(
-                self, "Force Stop",
-                "The current GPU step has not returned to Python.\n\n"
-                "Force Stop will auto-save the session and relaunch the app "
-                "to break the stuck job immediately.\n\n"
-                "Continue?",
+                self, "강제 중지",
+                "현재 GPU 단계가 Python으로 돌아오지 않고 있습니다.\n\n"
+                "강제 중지는 세션을 자동 저장한 뒤 앱을 다시 실행해 "
+                "멈춘 작업을 즉시 끊습니다.\n\n"
+                "계속할까요?",
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No,
             )
@@ -161,8 +161,8 @@ class CancelMixin:
             return
 
         reply = QMessageBox.question(
-            self, "Cancel",
-            "Cancel processing?",
+            self, "취소",
+            "처리를 취소할까요?",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         )

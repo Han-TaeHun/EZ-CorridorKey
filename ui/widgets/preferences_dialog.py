@@ -511,7 +511,7 @@ class PreferencesDialog(QDialog):
         """Open folder picker for default output directory."""
         start = self._output_dir_edit.text() or ""
         path = QFileDialog.getExistingDirectory(
-            self, "Select Default Output Directory", start,
+            self, "기본 출력 디렉터리 선택", start,
             QFileDialog.ShowDirsOnly,
         )
         if path:
@@ -561,8 +561,8 @@ class PreferencesDialog(QDialog):
         if current.ok:
             QMessageBox.information(
                 self,
-                "FFmpeg OK",
-                f"{current.message}\n\nNo repair is needed.",
+                "FFmpeg 정상",
+                f"{current.message}\n\n복구가 필요하지 않습니다.",
             )
             return
 
@@ -572,38 +572,38 @@ class PreferencesDialog(QDialog):
             QApplication.clipboard().setText(help_text)
             QMessageBox.information(
                 self,
-                "Repair FFmpeg",
-                help_text + "\n\nThe install command has been copied to your clipboard.\n"
-                "Paste it into a terminal to install.",
+                "FFmpeg 복구",
+                help_text + "\n\n설치 명령을 클립보드에 복사했습니다.\n"
+                "터미널에 붙여 넣어 설치하세요.",
             )
             return
 
         if _sys.platform == "win32":
             confirm_msg = (
-                "CorridorKey will download and install a full bundled FFmpeg build into:\n\n"
+                "CorridorKey가 전체 FFmpeg 번들 빌드를 내려받아 다음 위치에 설치합니다:\n\n"
                 f"{self._local_ffmpeg_dir}\n\n"
-                "This does not modify your system-wide FFmpeg.\n\nContinue?"
+                "시스템 전체 FFmpeg 설치는 변경하지 않습니다.\n\n계속할까요?"
             )
         else:
             confirm_msg = (
-                "CorridorKey will install FFmpeg via Homebrew:\n\n"
+                "CorridorKey가 Homebrew로 FFmpeg를 설치합니다:\n\n"
                 "    brew install ffmpeg\n\n"
-                "Continue?"
+                "계속할까요?"
             )
 
         reply = QMessageBox.question(
             self,
-            "Repair FFmpeg",
+            "FFmpeg 복구",
             confirm_msg,
         )
         if reply != QMessageBox.Yes:
             return
 
         self._ffmpeg_progress.setRange(0, 0)
-        self._ffmpeg_progress.setFormat("Preparing repair...")
+        self._ffmpeg_progress.setFormat("복구 준비 중...")
         self._ffmpeg_progress.show()
         self._set_ffmpeg_repair_busy(True)
-        self._set_parent_status_message("Repairing FFmpeg...")
+        self._set_parent_status_message("FFmpeg 복구 중...")
 
         self._ffmpeg_repair_worker = _FFmpegRepairWorker(self)
         self._ffmpeg_repair_worker.progress.connect(self._on_ffmpeg_repair_progress)
@@ -637,15 +637,15 @@ class PreferencesDialog(QDialog):
         self._refresh_ffmpeg_status()
         QMessageBox.information(
             self,
-            "FFmpeg Repaired",
-            message + "\n\nCorridorKey will use FFmpeg immediately.",
+            "FFmpeg 복구 완료",
+            message + "\n\nCorridorKey가 FFmpeg를 즉시 사용합니다.",
         )
 
     def _on_ffmpeg_repair_failed(self, message: str) -> None:
         """Handle a failed FFmpeg repair."""
         self._finish_ffmpeg_repair()
         self._refresh_ffmpeg_status()
-        QMessageBox.critical(self, "FFmpeg Repair Failed", message)
+        QMessageBox.critical(self, "FFmpeg 복구 실패", message)
 
     @property
     def show_tooltips(self) -> bool:

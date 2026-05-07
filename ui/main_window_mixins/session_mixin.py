@@ -175,7 +175,7 @@ class SessionMixin:
         """Save session to JSON sidecar in clips directory."""
         path = self._session_path()
         if not path:
-            QMessageBox.information(self, "No Folder", "Open a clips folder first.")
+            QMessageBox.information(self, "폴더 없음", "먼저 클립 폴더를 열어 주세요.")
             return
 
         data = self._build_session_data()
@@ -224,7 +224,7 @@ class SessionMixin:
         from backend.project import projects_root
         start_dir = projects_root()
         folder = QFileDialog.getExistingDirectory(
-            self, "Open Project", start_dir,
+            self, "프로젝트 열기", start_dir,
         )
         if not folder:
             return

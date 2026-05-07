@@ -21,13 +21,53 @@ logger = logging.getLogger(__name__)
 
 
 class _MessageBoxFilter(QObject):
-    """Auto-center buttons on every QMessageBox in the app."""
+    """앱의 표준 대화상자 버튼을 정렬하고 한국어로 표시한다."""
+
+    _BUTTON_TEXTS = {
+        QMessageBox.Ok: "확인",
+        QMessageBox.Cancel: "취소",
+        QMessageBox.Yes: "예",
+        QMessageBox.No: "아니요",
+        QMessageBox.Close: "닫기",
+        QMessageBox.Retry: "다시 시도",
+        QMessageBox.Ignore: "무시",
+        QMessageBox.Abort: "중단",
+        QMessageBox.Apply: "적용",
+        QMessageBox.Save: "저장",
+        QMessageBox.Discard: "저장 안 함",
+    }
+    _DIALOG_BUTTON_TEXTS = {
+        QDialogButtonBox.Ok: "확인",
+        QDialogButtonBox.Cancel: "취소",
+        QDialogButtonBox.Yes: "예",
+        QDialogButtonBox.No: "아니요",
+        QDialogButtonBox.Close: "닫기",
+        QDialogButtonBox.Retry: "다시 시도",
+        QDialogButtonBox.Ignore: "무시",
+        QDialogButtonBox.Abort: "중단",
+        QDialogButtonBox.Apply: "적용",
+        QDialogButtonBox.Save: "저장",
+        QDialogButtonBox.Discard: "저장 안 함",
+    }
 
     def eventFilter(self, obj, event):
         if event.type() == QEvent.Show and isinstance(obj, QMessageBox):
             for bb in obj.findChildren(QDialogButtonBox):
                 bb.setCenterButtons(True)
+                self._translate_button_box(bb)
+            for button, text in self._BUTTON_TEXTS.items():
+                widget = obj.button(button)
+                if widget is not None:
+                    widget.setText(text)
+        elif event.type() == QEvent.Show and isinstance(obj, QDialogButtonBox):
+            self._translate_button_box(obj)
         return False
+
+    def _translate_button_box(self, box: QDialogButtonBox) -> None:
+        for button, text in self._DIALOG_BUTTON_TEXTS.items():
+            widget = box.button(button)
+            if widget is not None:
+                widget.setText(text)
 
 
 def _configure_runtime_backends() -> None:

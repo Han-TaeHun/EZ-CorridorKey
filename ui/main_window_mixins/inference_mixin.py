@@ -97,17 +97,17 @@ class InferenceMixin:
             fill_pct = float(result.get("fill", 0.0)) * 100.0
             reply = QMessageBox.question(
                 self,
-                "Track Mask Preview",
-                f"SAM2 preview on frame {frame_number} covers {fill_pct:.1f}% of the frame.\n\n"
-                "If this looks right, continue with full Track Mask.\n"
-                "If not, keep painting corrections on this frame and run Track Mask again.",
+                "트랙 마스크 미리보기",
+                f"{frame_number}번 프레임의 SAM2 미리보기가 화면의 {fill_pct:.1f}%를 덮고 있습니다.\n\n"
+                "결과가 맞아 보이면 전체 Track Mask를 계속 진행하세요.\n"
+                "아니라면 이 프레임에 페인트를 보정한 뒤 Track Mask를 다시 실행하세요.",
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.Yes,
             )
             if reply == QMessageBox.Yes:
                 self._submit_sam2_track_job(clip)
             else:
-                self._status_bar.set_message("Track preview ready. Refine paint strokes and run Track Mask again.")
+                self._status_bar.set_message("트랙 미리보기가 준비되었습니다. 페인트를 보정한 뒤 Track Mask를 다시 실행하세요.")
             return
 
         if 'comp' not in result:
@@ -159,9 +159,9 @@ class InferenceMixin:
         clip = self._current_clip
         if clip.state not in (ClipState.READY, ClipState.COMPLETE):
             QMessageBox.warning(
-                self, "Not Ready",
-                f"Clip '{clip.name}' is in {clip.state.value} state.\n"
-                "Only READY or COMPLETE clips can be processed.",
+                self, "준비되지 않음",
+                f"'{clip.name}' 클립은 현재 {clip.state.value} 상태입니다.\n"
+                "READY 또는 COMPLETE 상태의 클립만 처리할 수 있습니다.",
             )
             return
 
@@ -172,14 +172,14 @@ class InferenceMixin:
             if 0 < alpha_count < input_count:
                 msg = QMessageBox(self)
                 msg.setIcon(QMessageBox.Warning)
-                msg.setWindowTitle("Incomplete Alpha")
+                msg.setWindowTitle("알파 불완전")
                 msg.setText(
-                    f"Alpha hints cover {alpha_count} of {input_count} frames.\n\n"
-                    "You can process the available range, re-run GVM to\n"
-                    "regenerate all alpha frames, or cancel."
+                    f"알파 힌트가 전체 {input_count}프레임 중 {alpha_count}프레임만 덮고 있습니다.\n\n"
+                    "사용 가능한 범위만 처리하거나, GVM을 다시 실행해\n"
+                    "모든 알파 프레임을 재생성하거나, 취소할 수 있습니다."
                 )
-                btn_process = msg.addButton("Process Available", QMessageBox.AcceptRole)
-                btn_rerun = msg.addButton("Re-run GVM", QMessageBox.ActionRole)
+                btn_process = msg.addButton("가능한 범위 처리", QMessageBox.AcceptRole)
+                btn_rerun = msg.addButton("GVM 다시 실행", QMessageBox.ActionRole)
                 msg.addButton(QMessageBox.Cancel)
                 msg.exec()
                 clicked = msg.clickedButton()
@@ -216,7 +216,7 @@ class InferenceMixin:
             )
 
         if not self._service.job_queue.submit(job):
-            QMessageBox.information(self, "Duplicate", f"'{clip.name}' is already queued.")
+            QMessageBox.information(self, "중복 작업", f"'{clip.name}' 클립은 이미 대기열에 있습니다.")
             return
 
         self._start_worker_if_needed(job.id)
@@ -243,7 +243,7 @@ class InferenceMixin:
         # Resume always processes full clip — no in/out range
 
         if not self._service.job_queue.submit(job):
-            QMessageBox.information(self, "Duplicate", f"'{clip.name}' is already queued.")
+            QMessageBox.information(self, "중복 작업", f"'{clip.name}' 클립은 이미 대기열에 있습니다.")
             return
 
         self._start_worker_if_needed(job.id)
@@ -270,7 +270,7 @@ class InferenceMixin:
         """Queue all READY clips for inference."""
         ready_clips = self._clip_model.clips_by_state(ClipState.READY)
         if not ready_clips:
-            QMessageBox.information(self, "No Clips", "No READY clips to process.")
+            QMessageBox.information(self, "클립 없음", "처리할 READY 클립이 없습니다.")
             return
 
         params = self._param_panel.get_params()
@@ -320,8 +320,8 @@ class InferenceMixin:
         if not routes:
             from PySide6.QtWidgets import QMessageBox
             QMessageBox.information(
-                self, "Nothing to Process",
-                "No selected clips are in a processable state.",
+                self, "처리할 항목 없음",
+                "선택한 클립 중 처리 가능한 상태의 클립이 없습니다.",
             )
             return
 

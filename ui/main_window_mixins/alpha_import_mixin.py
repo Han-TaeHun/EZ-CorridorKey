@@ -44,19 +44,19 @@ class AlphaImportMixin:
         )
         if has_existing_alpha:
             result = QMessageBox.question(
-                self, "Replace Alpha Hints?",
-                f"Clip '{clip.name}' already has alpha hint images.\n\n"
-                "Do you want to replace them with new ones?",
+                self, "알파 힌트 교체",
+                f"'{clip.name}' 클립에 이미 알파 힌트 이미지가 있습니다.\n\n"
+                "새 알파 힌트로 교체할까요?",
                 QMessageBox.Yes | QMessageBox.No,
             )
             if result != QMessageBox.Yes:
                 return
 
         picker = QMessageBox(self)
-        picker.setWindowTitle("Import Alpha")
-        picker.setText("Import alpha from an image folder or a video file?")
-        folder_btn = picker.addButton("Image Folder", QMessageBox.AcceptRole)
-        video_btn = picker.addButton("Video File", QMessageBox.ActionRole)
+        picker.setWindowTitle("알파 가져오기")
+        picker.setText("알파를 이미지 폴더에서 가져올까요, 비디오 파일에서 가져올까요?")
+        folder_btn = picker.addButton("이미지 폴더", QMessageBox.AcceptRole)
+        video_btn = picker.addButton("비디오 파일", QMessageBox.ActionRole)
         picker.addButton(QMessageBox.Cancel)
         picker.setDefaultButton(folder_btn)
         picker.exec()
@@ -66,7 +66,7 @@ class AlphaImportMixin:
         clicked = picker.clickedButton()
         if clicked == folder_btn:
             source_path = QFileDialog.getExistingDirectory(
-                self, "Select Alpha Hint Folder",
+                self, "알파 힌트 폴더 선택",
                 "",
                 QFileDialog.ShowDirsOnly,
             )
@@ -75,7 +75,7 @@ class AlphaImportMixin:
         elif clicked == video_btn:
             source_path, _ = QFileDialog.getOpenFileName(
                 self,
-                "Select Alpha Hint Video",
+                "알파 힌트 비디오 선택",
                 "",
                 VIDEO_FILE_FILTER,
             )
@@ -96,9 +96,9 @@ class AlphaImportMixin:
 
             if not src_files:
                 QMessageBox.warning(
-                    self, "No Images",
-                    "No image files found in the selected folder.\n"
-                    "Expected grayscale images (white=foreground, black=background).",
+                    self, "이미지 없음",
+                    "선택한 폴더에서 이미지 파일을 찾지 못했습니다.\n"
+                    "그레이스케일 이미지가 필요합니다. 흰색=전경, 검은색=배경입니다.",
                 )
                 return
 
@@ -108,8 +108,8 @@ class AlphaImportMixin:
             n_src = alpha_video.frame_count
             if n_src <= 0:
                 QMessageBox.warning(
-                    self, "Unreadable Video",
-                    "Could not read frame count from the selected alpha video.",
+                    self, "비디오를 읽을 수 없음",
+                    "선택한 알파 비디오의 프레임 수를 읽을 수 없습니다.",
                 )
                 return
 
@@ -129,11 +129,11 @@ class AlphaImportMixin:
 
         if n_src != n_input:
             result = QMessageBox.warning(
-                self, "Frame Count Mismatch",
-                f"Clip '{clip.name}' has {n_input} input frames but you "
-                f"selected {n_src} alpha hints.\n\n"
-                f"Each input frame needs a matching alpha hint.\n"
-                f"Only {min(n_src, n_input)} frames will be paired.",
+                self, "프레임 수 불일치",
+                f"'{clip.name}' 클립의 입력 프레임은 {n_input}개이지만 "
+                f"선택한 알파 힌트는 {n_src}개입니다.\n\n"
+                f"각 입력 프레임에는 대응되는 알파 힌트가 필요합니다.\n"
+                f"{min(n_src, n_input)}프레임만 짝지어 가져옵니다.",
                 QMessageBox.Ok | QMessageBox.Cancel,
             )
             if result == QMessageBox.Cancel:
@@ -143,14 +143,14 @@ class AlphaImportMixin:
         n_paired = min(n_src, n_input)
         if source_kind == "video":
             msg = (
-                f"Import alpha video ({n_src} frames) into '{clip.name}'?\n\n"
-                "The video will be converted to 8-bit PNG alpha frames in AlphaHint/."
+                f"알파 비디오({n_src}프레임)를 '{clip.name}' 클립으로 가져올까요?\n\n"
+                "비디오는 AlphaHint/ 폴더의 8비트 PNG 알파 프레임으로 변환됩니다."
             )
         else:
-            msg = f"Import {n_paired} alpha hint images into '{clip.name}'?"
+            msg = f"알파 힌트 이미지 {n_paired}개를 '{clip.name}' 클립으로 가져올까요?"
         if n_src != n_input:
-            msg += f"\n({abs(n_src - n_input)} frames will have no alpha hint)"
-        if QMessageBox.question(self, "Import Alpha", msg) != QMessageBox.Yes:
+            msg += f"\n({abs(n_src - n_input)}프레임은 알파 힌트가 없습니다.)"
+        if QMessageBox.question(self, "알파 가져오기", msg) != QMessageBox.Yes:
             return
 
         imported_count = 0
@@ -199,8 +199,8 @@ class AlphaImportMixin:
         except OSError as exc:
             QMessageBox.critical(
                 self,
-                "Import Alpha Failed",
-                f"Failed to import alpha hints:\n{exc}",
+                "알파 가져오기 실패",
+                f"알파 힌트를 가져오지 못했습니다:\n{exc}",
             )
             return
 
@@ -218,12 +218,12 @@ class AlphaImportMixin:
 
         if source_kind == "video":
             toast_msg = (
-                f"Imported {imported_count}/{n_paired} alpha frames from video.\n"
-                f"Clip is now {clip.state.value}."
+                f"비디오에서 알파 프레임 {imported_count}/{n_paired}개를 가져왔습니다.\n"
+                f"클립 상태: {clip.state.value}"
             )
         else:
             toast_msg = (
-                f"Imported {imported_count}/{n_paired} alpha hints.\n"
-                f"Clip is now {clip.state.value}."
+                f"알파 힌트 {imported_count}/{n_paired}개를 가져왔습니다.\n"
+                f"클립 상태: {clip.state.value}"
             )
         _Toast(self, toast_msg)
