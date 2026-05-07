@@ -131,6 +131,14 @@ MATANYONE2_CHECKPOINT = {
     "size_bytes": 141_429_115,
 }
 
+RESNET50_CHECKPOINT = {
+    "url": "https://download.pytorch.org/models/resnet50-19c8e357.pth",
+    "filename": "resnet50-19c8e357.pth",
+    "local_dir": model_paths.get_resnet50_dir(),
+    "size_human": "98 MB",
+    "size_bytes": 102_502_400,
+}
+
 # BiRefNet: 16 model variants all live under ZhengPeng7/ on HuggingFace.
 # The setup wizard offers the default "Matting" variant as an optional
 # pre-download (~940 MB). The runtime wrapper only loads local files and
@@ -421,6 +429,53 @@ def is_matanyone2_installed() -> bool:
     return (MATANYONE2_CHECKPOINT["local_dir"] / MATANYONE2_CHECKPOINT["filename"]).is_file()
 
 
+def is_resnet50_installed() -> bool:
+    """ResNet50 사전학습 체크포인트가 이미 있는지 확인한다."""
+    return (RESNET50_CHECKPOINT["local_dir"] / RESNET50_CHECKPOINT["filename"]).is_file()
+
+
+def download_resnet50() -> bool:
+    """ResNet50 사전학습 체크포인트를 로컬 checkpoints 폴더에 다운로드한다."""
+    cfg = RESNET50_CHECKPOINT
+    local_dir = cfg["local_dir"]
+    local_dir.mkdir(parents=True, exist_ok=True)
+    dest = local_dir / cfg["filename"]
+
+    if dest.is_file():
+        print(f"  [OK] ResNet50 checkpoint already installed")
+        return True
+
+    if not check_disk_space(cfg["size_bytes"], local_dir):
+        usage = shutil.disk_usage(local_dir)
+        free_gb = usage.free / (1024**3)
+        print(f"  [ERROR] Not enough disk space for ResNet50 ({cfg['size_human']})")
+        print(f"  Available: {free_gb:.1f} GB")
+        return False
+
+    print(f"  Downloading ResNet50 checkpoint ({cfg['size_human']})...")
+    tmp_dest = dest.with_suffix(".pth.tmp")
+    try:
+        def _progress(block_num, block_size, total_size):
+            downloaded = block_num * block_size
+            if total_size > 0:
+                pct = min(100, downloaded * 100 // total_size)
+                mb = downloaded / (1024 * 1024)
+                total_mb = total_size / (1024 * 1024)
+                print(f"\r  {mb:.0f}/{total_mb:.0f} MB ({pct}%)", end="", flush=True)
+
+        urllib.request.urlretrieve(cfg["url"], str(tmp_dest), reporthook=_progress)
+        print()
+        tmp_dest.rename(dest)
+        print(f"  Saved to: {dest}")
+        return True
+    except Exception as e:
+        print(f"\n  [ERROR] Download failed: {e}")
+        print(f"  Manual download: {cfg['url']}")
+        print(f"  Place in: {local_dir}/")
+        tmp_dest.unlink(missing_ok=True)
+        return False
+
+
 def download_matanyone2() -> bool:
     """Download the MatAnyone2 checkpoint from GitHub Releases."""
     cfg = MATANYONE2_CHECKPOINT
@@ -541,6 +596,12 @@ def check_all():
     ma2_status = "INSTALLED" if ma2_installed else "NOT INSTALLED"
     print(f"  {ma2_mark} matanyone2   {MATANYONE2_CHECKPOINT['size_human']:>8s}  {ma2_status} (optional)")
 
+    # MatAnyone2의 ResNet 백본이 사용하는 ResNet50 사전학습 가중치.
+    resnet50_installed = is_resnet50_installed()
+    resnet50_mark = "[OK]" if resnet50_installed else "[--]"
+    resnet50_status = "INSTALLED" if resnet50_installed else "NOT INSTALLED"
+    print(f"  {resnet50_mark} resnet50     {RESNET50_CHECKPOINT['size_human']:>8s}  {resnet50_status} (optional)")
+
     # BiRefNet default Matting variant
     brn_installed = is_birefnet_installed()
     brn_mark = "[OK]" if brn_installed else "[--]"
@@ -584,6 +645,11 @@ def main():
     parser.add_argument("--gvm", action="store_true", help="Download GVM weights (~6GB, optional)")
     parser.add_argument("--videomama", action="store_true", help="Download VideoMaMa weights (~37GB, optional)")
     parser.add_argument("--matanyone2", action="store_true", help="Download MatAnyone2 weights (~141MB, optional)")
+    parser.add_argument(
+        "--resnet50",
+        action="store_true",
+        help="Download ResNet50 pretrained weights (~98MB, optional)",
+    )
     parser.add_argument("--birefnet", action="store_true", help="Download default BiRefNet Matting variant (~940MB, optional)")
     parser.add_argument("--all", action="store_true", help="Download all models")
     parser.add_argument("--check", action="store_true", help="Check installation status")
@@ -592,18 +658,44 @@ def main():
     mlx_flag = getattr(args, 'corridorkey_mlx', False)
 
     # Default to --check if no flags
-    if not any([args.corridorkey, mlx_flag, args.sam2, args.gvm, args.videomama, args.matanyone2, args.birefnet, args.all, args.check]):
+    if not any(
+        [
+            args.corridorkey,
+            mlx_flag,
+            args.sam2,
+            args.gvm,
+            args.videomama,
+            args.matanyone2,
+            args.resnet50,
+            args.birefnet,
+            args.all,
+            args.check,
+        ]
+    ):
         args.check = True
 
     if args.check:
         check_all()
-        if not any([args.corridorkey, mlx_flag, args.sam2, args.gvm, args.videomama, args.matanyone2, args.birefnet, args.all]):
+        if not any(
+            [
+                args.corridorkey,
+                mlx_flag,
+                args.sam2,
+                args.gvm,
+                args.videomama,
+                args.matanyone2,
+                args.resnet50,
+                args.birefnet,
+                args.all,
+            ]
+        ):
             return
 
     targets = []
     sam2_targets: list[str] = []
     download_mlx = False
     download_ma2 = False
+    download_resnet50_ckpt = False
     download_brn = False
     if args.all:
         targets = list(MODELS.keys())
@@ -620,6 +712,8 @@ def main():
             download_mlx = True
         if args.matanyone2:
             download_ma2 = True
+        if args.resnet50:
+            download_resnet50_ckpt = True
         if args.birefnet:
             download_brn = True
         if args.sam2:
@@ -632,7 +726,7 @@ def main():
         if args.videomama:
             targets.append("videomama")
 
-    if not targets and not sam2_targets and not download_mlx and not download_ma2 and not download_brn:
+    if not any([targets, sam2_targets, download_mlx, download_ma2, download_resnet50_ckpt, download_brn]):
         return
 
     total_targets = (
@@ -640,6 +734,7 @@ def main():
         + len(sam2_targets)
         + (1 if download_mlx else 0)
         + (1 if download_ma2 else 0)
+        + (1 if download_resnet50_ckpt else 0)
         + (1 if download_brn else 0)
     )
     print(f"\nDownloading {total_targets} model(s)...\n")
@@ -655,6 +750,10 @@ def main():
     if download_ma2:
         print("[matanyone2]")
         results["matanyone2"] = download_matanyone2()
+        print()
+    if download_resnet50_ckpt:
+        print("[resnet50]")
+        results["resnet50"] = download_resnet50()
         print()
     if download_brn:
         print("[birefnet]")

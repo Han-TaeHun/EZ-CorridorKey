@@ -5,6 +5,7 @@ We append extra channels to the first conv by some network surgery
 
 from collections import OrderedDict
 import math
+from pathlib import Path
 
 import torch
 import torch.nn as nn
@@ -36,6 +37,32 @@ model_urls = {
     'resnet18': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
     'resnet50': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
 }
+
+_RESNET50_FILENAME = 'resnet50-19c8e357.pth'
+
+
+def _get_resnet50_checkpoint_path():
+    try:
+        from backend import model_paths
+        return model_paths.get_resnet50_dir() / _RESNET50_FILENAME
+    except Exception:
+        return (
+            Path(__file__).resolve().parents[5]
+            / 'checkpoints'
+            / 'resnet50'
+            / _RESNET50_FILENAME
+        )
+
+
+def _load_resnet50_pretrained_state():
+    checkpoint_path = _get_resnet50_checkpoint_path()
+    if not checkpoint_path.is_file():
+        raise FileNotFoundError(
+            "ResNet50 pretrained checkpoint not found.\n"
+            f"Expected: {checkpoint_path}\n"
+            "Run `python -m scripts.setup_models --resnet50` to download."
+        )
+    return torch.load(checkpoint_path, map_location='cpu')
 
 
 def conv3x3(in_planes, out_planes, stride=1, dilation=1):
@@ -175,5 +202,5 @@ def resnet18(pretrained=True, extra_dim=0):
 def resnet50(pretrained=True, extra_dim=0):
     model = ResNet(Bottleneck, [3, 4, 6, 3], extra_dim)
     if pretrained:
-        load_weights_add_extra_dim(model, model_zoo.load_url(model_urls['resnet50']), extra_dim)
+        load_weights_add_extra_dim(model, _load_resnet50_pretrained_state(), extra_dim)
     return model

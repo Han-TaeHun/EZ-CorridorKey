@@ -44,5 +44,9 @@ def get_matanyone2_dir() -> Path:
     return get_checkpoints_root() / "matanyone2"
 
 
+def get_resnet50_dir() -> Path:
+    return get_checkpoints_root() / "resnet50"
+
+
 def get_corridorkey_dir() -> Path:
     return get_checkpoints_root() / "corridorkey"
