@@ -10,35 +10,30 @@ _FatSlider: QSlider with enlarged clickable groove area.
 from __future__ import annotations
 
 from PySide6.QtWidgets import QSlider, QWidget, QStyle, QStyleOptionSlider
-from PySide6.QtCore import Qt, Signal, QPointF
-from PySide6.QtGui import QPainter, QColor, QPolygonF
+from PySide6.QtCore import Qt, Signal, QPointF, QEvent
+from PySide6.QtGui import QPainter, QColor, QPolygonF, QMouseEvent
 
 
 class _FatSlider(QSlider):
-    """QSlider with an enlarged clickable groove area.
-
-    Overrides the style sub-control rect so the groove (and its click target)
-    extends to fill the full widget height, making it much easier to click.
-    """
+    """확장된 groove 영역 어디든 클릭하면 점프 + 드래그가 가능한 슬라이더."""
 
     def __init__(self, orientation, parent=None):
         super().__init__(orientation, parent)
-        self.setFixedHeight(22)  # taller than default ~16px
+        self.setFixedHeight(22)  # 기본 ~16px보다 크게: 클릭 타겟 확대
 
     def _groove_rect(self):
-        """Return the expanded groove rect used for hit-testing."""
+        """확장된 groove 영역을 반환합니다."""
         opt = QStyleOptionSlider()
         self.initStyleOption(opt)
         base = self.style().subControlRect(
             QStyle.CC_Slider, opt, QStyle.SC_SliderGroove, self
         )
-        # Expand groove to full widget height
         base.setTop(0)
         base.setBottom(self.height())
         return base
 
     def _value_from_x(self, x: float) -> int:
-        """x 좌표를 확장 groove 기준 슬라이더 값으로 변환합니다."""
+        """확장 groove 기준 x 좌표를 슬라이더 값으로 변환합니다."""
         groove = self._groove_rect()
         if groove.width() <= 0:
             return self.value()
@@ -46,29 +41,32 @@ class _FatSlider(QSlider):
         ratio = max(0.0, min(1.0, ratio))
         return self.minimum() + round(ratio * (self.maximum() - self.minimum()))
 
+    def _handle_center(self) -> QPointF:
+        """현재 값에 해당하는 핸들 중심 좌표를 반환합니다."""
+        opt = QStyleOptionSlider()
+        self.initStyleOption(opt)
+        handle = self.style().subControlRect(
+            QStyle.CC_Slider, opt, QStyle.SC_SliderHandle, self
+        )
+        return QPointF(handle.center().x(), handle.center().y())
+
     def mousePressEvent(self, event):
-        """Jump slider to click position anywhere in the expanded groove."""
+        """LMB: 클릭 위치로 점프한 뒤 native 드래그 처리에 위임합니다."""
         if event.button() == Qt.LeftButton:
             self.setValue(self._value_from_x(event.position().x()))
-            self.setSliderDown(True)
+            center = self._handle_center()
+            synth = QMouseEvent(
+                QEvent.MouseButtonPress,
+                center,
+                self.mapToGlobal(center),
+                Qt.LeftButton,
+                Qt.LeftButton,
+                event.modifiers(),
+            )
+            super().mousePressEvent(synth)
             event.accept()
             return
         super().mousePressEvent(event)
-
-    def mouseMoveEvent(self, event):
-        """왼쪽 버튼 드래그 중 슬라이더 값을 갱신합니다."""
-        if event.buttons() & Qt.LeftButton and self.isSliderDown():
-            self.setValue(self._value_from_x(event.position().x()))
-            event.accept()
-            return
-        super().mouseMoveEvent(event)
-
-    def mouseReleaseEvent(self, event):
-        if event.button() == Qt.LeftButton and self.isSliderDown():
-            self.setSliderDown(False)
-            event.accept()
-            return
-        super().mouseReleaseEvent(event)
 
 
 class CoverageBar(QWidget):

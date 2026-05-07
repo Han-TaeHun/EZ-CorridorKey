@@ -152,6 +152,10 @@ class FrameScrubber(QWidget):
         """Watch slider for mouse moves (marker proximity) and tooltip forwarding."""
         if obj is self._slider:
             if event.type() == QEvent.MouseMove:
+                # 슬라이더 드래그 중에는 마커 오버레이가 마우스 이벤트를 가로채지
+                # 못하게 막아 in/out 마커를 통과해도 스크럽이 끊기지 않게 한다.
+                if self._slider.isSliderDown():
+                    return super().eventFilter(obj, event)
                 x = int(event.position().x())
                 hit = self._marker_overlay._hit_marker(x)
                 if hit and not self._marker_overlay._dragging:
