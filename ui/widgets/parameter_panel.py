@@ -249,7 +249,7 @@ class ParameterPanel(QWidget):
         self._color_space_label.setFixedWidth(80)
         self._color_space_label.setToolTip(_COLOR_SPACE_TOOLTIP)
         cs_row.addWidget(self._color_space_label)
-        self._color_space = QComboBox()
+        self._color_space = _no_scroll_wheel(QComboBox())
         self._color_space.addItems(["sRGB", "Linear"])
         self._color_space.setToolTip(_COLOR_SPACE_TOOLTIP)
         self._color_space.currentIndexChanged.connect(self._emit_changed)
@@ -324,7 +324,7 @@ class ParameterPanel(QWidget):
         # FG
         fg_row = QHBoxLayout()
         self._fg_check = QCheckBox("FG")
-        self._fg_check.setChecked(True)
+        self._fg_check.setChecked(False)
         self._fg_check.setToolTip(
             "전경 출력입니다. 검은 배경 위에 디스필 처리된 피사체를 저장합니다.\n"
             "머리카락과 가장자리의 그린 스필이 제거됩니다.\n"
@@ -358,7 +358,7 @@ class ParameterPanel(QWidget):
         # Comp
         comp_row = QHBoxLayout()
         self._comp_check = QCheckBox("Comp")
-        self._comp_check.setChecked(True)
+        self._comp_check.setChecked(False)
         self._comp_check.setToolTip(
             "합성 미리보기 출력입니다. 체크보드 위에 최종 키 결과를 보여줍니다.\n"
             "키 품질을 확인하기 가장 좋은 표현입니다.\n"
@@ -375,7 +375,7 @@ class ParameterPanel(QWidget):
         # Processed
         proc_row = QHBoxLayout()
         self._proc_check = QCheckBox("Processed")
-        self._proc_check.setChecked(True)
+        self._proc_check.setChecked(False)
         self._proc_check.setToolTip(
             "Processed 출력입니다. 제작용 RGBA(스트레이트, 리니어)입니다.\n"
             "Resolve, Premiere, 합성 도구로 가져가기 좋게 설계되었습니다.\n"

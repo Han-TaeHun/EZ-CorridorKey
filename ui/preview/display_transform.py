@@ -101,9 +101,21 @@ def _decode_ldr(
     input_exr_is_linear: bool = False,
 ) -> QImage | None:
     """Decode an 8-bit image (PNG/JPG/etc) to QImage."""
-    img = cv2.imread(path, cv2.IMREAD_COLOR)
+    img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
     if img is None:
         return None
+
+    if img.ndim == 2:
+        if mode in (ViewMode.MATTE, ViewMode.ALPHA):
+            return _transform_matte(img.astype(np.float32) / 255.0)
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+    elif img.ndim == 3 and img.shape[2] == 4:
+        if mode == ViewMode.MATTE:
+            return _transform_matte(img[:, :, 0].astype(np.float32) / 255.0)
+        img = img[:, :, :3]
+    elif img.ndim == 3 and img.shape[2] == 3 and mode == ViewMode.MATTE:
+        return _transform_matte(img[:, :, 0].astype(np.float32) / 255.0)
+
     if mode == ViewMode.INPUT and input_exr_is_linear:
         return _transform_linear_rgb(
             img.astype(np.float32) / 255.0,

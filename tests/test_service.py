@@ -494,6 +494,52 @@ class TestWriteOutputs:
         assert os.path.exists(os.path.join(dirs["matte"], "frame_00000.png"))
         assert not os.path.exists(os.path.join(dirs["comp"], "frame_00000.png"))
 
+    def test_matte_png_embeds_alpha_hint_as_alpha_channel(self, tmp_clip_dir):
+        svc = CorridorKeyService()
+        from backend.validators import ensure_output_dirs
+
+        dirs = ensure_output_dirs(tmp_clip_dir)
+        res = self._make_result_dict()
+        res["alpha"] = np.array([[0.0, 0.5], [0.75, 1.0]], dtype=np.float32)
+        res["alpha_hint"] = np.array([[0.0, 0.25], [0.5, 1.0]], dtype=np.float32)
+        cfg = OutputConfig(
+            fg_enabled=False,
+            matte_enabled=True,
+            comp_enabled=False,
+            processed_enabled=False,
+            matte_format="png",
+        )
+
+        svc._write_outputs(res, dirs, "frame_00000", "clip1", 0, cfg)
+
+        img = cv2.imread(os.path.join(dirs["matte"], "frame_00000.png"), cv2.IMREAD_UNCHANGED)
+        assert img.shape == (2, 2, 4)
+        np.testing.assert_array_equal(img[:, :, 0], img[:, :, 1])
+        np.testing.assert_array_equal(img[:, :, 1], img[:, :, 2])
+        np.testing.assert_array_equal(img[:, :, 0], np.array([[0, 127], [191, 255]], dtype=np.uint8))
+        np.testing.assert_array_equal(img[:, :, 3], np.array([[0, 63], [127, 255]], dtype=np.uint8))
+
+    def test_matte_png_without_alpha_hint_stays_three_channel(self, tmp_clip_dir):
+        svc = CorridorKeyService()
+        from backend.validators import ensure_output_dirs
+
+        dirs = ensure_output_dirs(tmp_clip_dir)
+        res = self._make_result_dict()
+        cfg = OutputConfig(
+            fg_enabled=False,
+            matte_enabled=True,
+            comp_enabled=False,
+            processed_enabled=False,
+            matte_format="png",
+        )
+
+        svc._write_outputs(res, dirs, "frame_00000", "clip1", 0, cfg)
+
+        img = cv2.imread(os.path.join(dirs["matte"], "frame_00000.png"), cv2.IMREAD_UNCHANGED)
+        assert img.shape == (4, 4, 3)
+        np.testing.assert_array_equal(img[:, :, 0], img[:, :, 1])
+        np.testing.assert_array_equal(img[:, :, 1], img[:, :, 2])
+
     def test_missing_processed_key(self, tmp_clip_dir):
         """If 'processed' not in result dict, skip gracefully."""
         svc = CorridorKeyService()

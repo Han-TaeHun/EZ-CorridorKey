@@ -111,6 +111,7 @@ class ParallelInferenceMixin:
                         edge_erode_px=params.edge_erode_px,
                         edge_blur_px=params.edge_blur_px,
                     )
+                    res['alpha_hint'] = mask
                     out_q.put((frame_idx, stem, res, None))
                     if not warmup_done.is_set():
                         warmup_done.set()

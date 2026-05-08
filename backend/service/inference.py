@@ -224,6 +224,7 @@ class InferenceMixin(ParallelInferenceMixin):
                         f"Frame {i}: {dt * 1000:.0f}ms ({avg_fps:.1f} fps avg)"
                     )
 
+                    res['alpha_hint'] = mask
                     self._write_outputs(res, dirs, input_stem, clip.name, i, cfg)
                     results.append(FrameResult(i, input_stem, True))
 

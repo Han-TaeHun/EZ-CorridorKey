@@ -30,6 +30,18 @@ def test_color_space_tooltip_explains_preview_and_export_behavior():
     assert panel._color_space_label.toolTip() == tooltip
 
 
+def test_output_defaults_enable_only_matte():
+    _app()
+    panel = ParameterPanel()
+
+    config = panel.get_output_config()
+
+    assert config.fg_enabled is False
+    assert config.matte_enabled is True
+    assert config.comp_enabled is False
+    assert config.processed_enabled is False
+
+
 def test_live_preview_tooltip_mentions_engine_warmup_and_saved_outputs():
     _app()
     panel = ParameterPanel()

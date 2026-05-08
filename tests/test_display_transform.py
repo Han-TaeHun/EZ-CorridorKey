@@ -150,6 +150,37 @@ class TestDecodeFrame:
         assert qimg.width() == 30
         assert qimg.height() == 20
 
+    def test_decode_grayscale_png_as_matte(self, tmp_path):
+        clear_cache()
+        img = np.full((1, 1), 64, dtype=np.uint8)
+        path = os.path.join(str(tmp_path), "matte_gray.png")
+        cv2.imwrite(path, img)
+
+        qimg = decode_frame(path, ViewMode.MATTE)
+
+        assert isinstance(qimg, QImage)
+        color = qimg.pixelColor(0, 0)
+        expected = int(((64 / 255.0) ** 0.85) * 255.0)
+        assert color.red() == expected
+        assert color.green() == expected
+        assert color.blue() == expected
+
+    def test_decode_bgra_png_as_matte_uses_rgb_matte_channel(self, tmp_path):
+        clear_cache()
+        img = np.zeros((1, 1, 4), dtype=np.uint8)
+        img[0, 0] = [64, 64, 64, 255]
+        path = os.path.join(str(tmp_path), "matte_with_hint.png")
+        cv2.imwrite(path, img)
+
+        qimg = decode_frame(path, ViewMode.MATTE)
+
+        assert isinstance(qimg, QImage)
+        color = qimg.pixelColor(0, 0)
+        expected = int(((64 / 255.0) ** 0.85) * 255.0)
+        assert color.red() == expected
+        assert color.green() == expected
+        assert color.blue() == expected
+
     def test_input_png_respects_linear_interpretation(self, tmp_path):
         """INPUT PNG preview should gamma-correct when the source is marked linear."""
         clear_cache()

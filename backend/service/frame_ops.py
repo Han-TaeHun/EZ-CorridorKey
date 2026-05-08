@@ -179,8 +179,28 @@ class FrameOpsMixin:
             if alpha.ndim == 3:
                 alpha = alpha[:, :, 0]
             matte_path = os.path.join(dirs['matte'], f"{input_stem}.{cfg.matte_format}")
-            self._write_image(alpha, matte_path, cfg.matte_format, clip_name, frame_index,
-                              exr_compression=cfg.exr_compression)
+            if cfg.matte_format == "png":
+                m8 = (np.clip(alpha, 0.0, 1.0) * 255.0).astype(np.uint8)
+                alpha_hint = res.get('alpha_hint') if res is not None else None
+                if alpha_hint is not None:
+                    ah = alpha_hint
+                    if ah.ndim == 3:
+                        ah = ah[:, :, 0]
+                    if ah.dtype != np.uint8:
+                        ah_f = ah.astype(np.float32)
+                        if np.max(ah_f) > 1.0:
+                            ah_f = ah_f / 255.0
+                        ah = (np.clip(ah_f, 0.0, 1.0) * 255.0).astype(np.uint8)
+                    if ah.shape[:2] != m8.shape[:2]:
+                        ah = cv2.resize(ah, (m8.shape[1], m8.shape[0]), interpolation=cv2.INTER_LINEAR)
+                    img_out = np.stack([m8, m8, m8, ah], axis=-1)
+                else:
+                    img_out = np.stack([m8, m8, m8], axis=-1)
+                self._write_image(img_out, matte_path, cfg.matte_format, clip_name, frame_index,
+                                  exr_compression=cfg.exr_compression)
+            else:
+                self._write_image(alpha, matte_path, cfg.matte_format, clip_name, frame_index,
+                                  exr_compression=cfg.exr_compression)
 
         # Comp
         if cfg.comp_enabled:
