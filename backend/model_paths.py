@@ -44,6 +44,10 @@ def get_matanyone2_dir() -> Path:
     return get_checkpoints_root() / "matanyone2"
 
 
+def get_resnet18_dir() -> Path:
+    return get_checkpoints_root() / "resnet18"
+
+
 def get_resnet50_dir() -> Path:
     return get_checkpoints_root() / "resnet50"
 

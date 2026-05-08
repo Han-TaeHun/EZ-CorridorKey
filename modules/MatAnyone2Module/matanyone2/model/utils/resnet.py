@@ -38,29 +38,31 @@ model_urls = {
     'resnet50': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
 }
 
+_RESNET18_FILENAME = 'resnet18-5c106cde.pth'
 _RESNET50_FILENAME = 'resnet50-19c8e357.pth'
 
 
-def _get_resnet50_checkpoint_path():
+def _get_resnet_checkpoint_path(model_name: str, filename: str) -> Path:
     try:
         from backend import model_paths
-        return model_paths.get_resnet50_dir() / _RESNET50_FILENAME
+        getter = getattr(model_paths, f'get_{model_name}_dir')
+        return getter() / filename
     except Exception:
         return (
             Path(__file__).resolve().parents[5]
             / 'checkpoints'
-            / 'resnet50'
-            / _RESNET50_FILENAME
+            / model_name
+            / filename
         )
 
 
-def _load_resnet50_pretrained_state():
-    checkpoint_path = _get_resnet50_checkpoint_path()
+def _load_resnet_pretrained_state(model_name: str, filename: str):
+    checkpoint_path = _get_resnet_checkpoint_path(model_name, filename)
     if not checkpoint_path.is_file():
         raise FileNotFoundError(
-            "ResNet50 pretrained checkpoint not found.\n"
+            f"{model_name} pretrained checkpoint not found.\n"
             f"Expected: {checkpoint_path}\n"
-            "Run `python -m scripts.setup_models --resnet50` to download."
+            f"Download from: {model_urls[model_name]}"
         )
     return torch.load(checkpoint_path, map_location='cpu', weights_only=False)
 
@@ -195,12 +197,14 @@ class ResNet(nn.Module):
 def resnet18(pretrained=True, extra_dim=0):
     model = ResNet(BasicBlock, [2, 2, 2, 2], extra_dim)
     if pretrained:
-        load_weights_add_extra_dim(model, model_zoo.load_url(model_urls['resnet18']), extra_dim)
+        state = _load_resnet_pretrained_state('resnet18', _RESNET18_FILENAME)
+        load_weights_add_extra_dim(model, state, extra_dim)
     return model
 
 
 def resnet50(pretrained=True, extra_dim=0):
     model = ResNet(Bottleneck, [3, 4, 6, 3], extra_dim)
     if pretrained:
-        load_weights_add_extra_dim(model, _load_resnet50_pretrained_state(), extra_dim)
+        state = _load_resnet_pretrained_state('resnet50', _RESNET50_FILENAME)
+        load_weights_add_extra_dim(model, state, extra_dim)
     return model
