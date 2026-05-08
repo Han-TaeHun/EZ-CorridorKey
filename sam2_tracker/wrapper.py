@@ -319,9 +319,9 @@ class SAM2Tracker:
                     (earliest_prompt, False),
                     (latest_prompt, True),
                 ):
-                    # Skip the reverse pass when it would cover nothing new
-                    # (e.g. all prompts on frame 0 → reverse covers only frame 0).
-                    if reverse and pass_start <= earliest_prompt:
+                    # Skip the reverse pass only when the earliest prompt sits at frame 0 —
+                    # in that case backward propagation has no frames to cover before it.
+                    if reverse and earliest_prompt == 0:
                         continue
 
                     if reverse:
