@@ -9,13 +9,16 @@ platform-native GPU backing, QImage is guaranteed CPU-only).
 Zoom/pan: Ctrl+wheel zooms, middle-click pans, double-click resets.
 Hit-test precedence: divider drag > pan > annotation > zoom (Codex finding).
 
-Annotation mode: hotkey 1/2 activates green/red brush. Left-click draws
-strokes in image-pixel coordinates. Shift+drag resizes brush.
+Annotation mode: hotkey 1/2 activates green/red brush. Left-click places
+a single point. Click near an existing same-type point (within brush radius)
+to remove it. Shift+drag resizes brush (also adjusts proximity toggle radius).
 """
 from __future__ import annotations
 
+import time
+
 from PySide6.QtWidgets import QWidget
-from PySide6.QtCore import Qt, Signal, QPointF, QRectF
+from PySide6.QtCore import Qt, Signal, QPointF, QRectF, QTimer
 from PySide6.QtGui import (
     QPainter, QPen, QColor, QImage, QMouseEvent, QWheelEvent,
     QCursor,
@@ -24,6 +27,7 @@ from PySide6.QtGui import (
 from ui.widgets.annotation_overlay import (
     AnnotationModel, paint_annotations, paint_brush_cursor,
     paint_resize_indicator, paint_annotation_hud,
+    MAX_POSITIVE_POINTS_PER_FRAME, MAX_NEGATIVE_POINTS_PER_FRAME,
 )
 from ui.widgets.wipe_controller import (
     wipe_line_endpoints, wipe_handle_rect, wipe_distance_to_line,
@@ -91,13 +95,11 @@ class SplitViewWidget(QWidget):
         self._annotation_model: AnnotationModel | None = None
         self._annotation_stem_idx: int = -1
         self._brush_radius: float = 15.0  # image pixels
-        self._drawing: bool = False
         self._resizing_brush: bool = False
         self._resize_start_y: float = 0.0
         self._resize_start_radius: float = 0.0
         self._mouse_pos: QPointF = QPointF()  # last known mouse position (display)
-        self._straight_line: bool = False    # Alt+click straight-line mode
-        self._line_anchor: tuple[float, float] | None = None  # anchor in image-pixel coords
+        self._cap_flash_until: float = 0.0  # time.monotonic() deadline for HUD warning
 
     # ── Public API ──
 
@@ -375,6 +377,9 @@ class SplitViewWidget(QWidget):
             image_rect=paintable_rect,
             brush_type=self._annotation_mode,
             radius_image=self._brush_radius,
+            pos_count=self._annotation_model.count_points(self._annotation_stem_idx, "fg"),
+            neg_count=self._annotation_model.count_points(self._annotation_stem_idx, "bg"),
+            cap_warning=time.monotonic() < self._cap_flash_until,
         )
 
         # Brush cursor at mouse position
@@ -501,41 +506,40 @@ class SplitViewWidget(QWidget):
             self.update()
             return
 
-        # Annotation: Alt+left-click = straight line
-        if (event.button() == Qt.LeftButton
-                and self._annotation_mode
-                and self._annotation_model is not None
-                and event.modifiers() & Qt.AltModifier):
-            pos = self._display_to_image(event.position())
-            if pos is not None:
-                self._drawing = True
-                self._straight_line = True
-                self._line_anchor = pos
-                self._annotation_model.start_stroke(
-                    self._annotation_stem_idx,
-                    pos[0], pos[1],
-                    self._annotation_mode,
-                    self._brush_radius,
-                )
-                self.update()
-                return
-
-        # Annotation: left-click = start freehand drawing
+        # Annotation: left-click = add a point or toggle-remove a nearby same-type point
         if (event.button() == Qt.LeftButton
                 and self._annotation_mode
                 and self._annotation_model is not None):
             pos = self._display_to_image(event.position())
-            if pos is not None:
-                self._drawing = True
-                self._straight_line = False
-                self._annotation_model.start_stroke(
-                    self._annotation_stem_idx,
-                    pos[0], pos[1],
-                    self._annotation_mode,
-                    self._brush_radius,
-                )
+            if pos is None:
+                return
+
+            model = self._annotation_model
+            stem = self._annotation_stem_idx
+            mode = self._annotation_mode
+
+            nearby = model.find_nearby_stroke(stem, pos[0], pos[1], mode, self._brush_radius)
+            if nearby is not None:
+                model.remove_stroke(stem, nearby)
+                self.stroke_finished.emit()
                 self.update()
                 return
+
+            cap = (
+                MAX_POSITIVE_POINTS_PER_FRAME
+                if mode == "fg"
+                else MAX_NEGATIVE_POINTS_PER_FRAME
+            )
+            if model.count_points(stem, mode) >= cap:
+                self._cap_flash_until = time.monotonic() + 1.5
+                QTimer.singleShot(1500, self.update)
+                self.update()
+                return
+
+            model.add_single_point(stem, pos[0], pos[1], mode, self._brush_radius)
+            self.stroke_finished.emit()
+            self.update()
+            return
 
         # Middle-click on wipe line: reset to default angle
         if event.button() == Qt.MiddleButton and self._wipe_mode:
@@ -604,25 +608,6 @@ class SplitViewWidget(QWidget):
             self.update()
             return
 
-        # Annotation: straight-line preview (Alt+drag)
-        if self._drawing and self._straight_line and self._annotation_model is not None:
-            pos = self._display_to_image(event.position())
-            if pos is not None and self._line_anchor is not None:
-                # Replace stroke points with anchor + current endpoint for live preview
-                stroke = self._annotation_model.current_stroke
-                if stroke is not None:
-                    stroke.points = [self._line_anchor, pos]
-                self.update()
-            return
-
-        # Annotation: freehand drawing stroke
-        if self._drawing and self._annotation_model is not None:
-            pos = self._display_to_image(event.position())
-            if pos is not None:
-                self._annotation_model.add_point(pos[0], pos[1])
-                self.update()
-            return
-
         if self._panning:
             delta = event.position() - self._pan_start
             self._pan = QPointF(
@@ -657,22 +642,6 @@ class SplitViewWidget(QWidget):
 
         if self._resizing_brush:
             self._resizing_brush = False
-            self.update()
-            return
-
-        if self._drawing and self._annotation_model is not None:
-            # Straight-line: finalize with anchor + release point
-            if self._straight_line and self._line_anchor is not None:
-                pos = self._display_to_image(event.position())
-                if pos is not None:
-                    stroke = self._annotation_model.current_stroke
-                    if stroke is not None:
-                        stroke.points = [self._line_anchor, pos]
-                self._straight_line = False
-                self._line_anchor = None
-            self._annotation_model.finish_stroke()
-            self._drawing = False
-            self.stroke_finished.emit()
             self.update()
             return
 

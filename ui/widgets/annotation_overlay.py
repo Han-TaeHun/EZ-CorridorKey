@@ -1,16 +1,20 @@
-"""Annotation overlay — green/red brush strokes for prompt authoring.
+"""Annotation overlay - click-based point prompts for mask tracking.
 
-Provides a stroke-based annotation model and rendering/input mixin for
-SplitViewWidget. Users paint foreground (green, hotkey 1) and background
-(red, hotkey 2) strokes directly on frames. Strokes are stored per-frame
-in image-pixel coordinates and are primarily consumed as prompts for
-downstream mask tracking.
+Provides a point annotation model and rendering helpers for SplitViewWidget.
+Users place foreground (green, hotkey 1) and background (red, hotkey 2)
+points by clicking directly on frames. Points are stored as single-point
+strokes per-frame in image-pixel coordinates.
+
+Limits: MAX_POSITIVE_POINTS_PER_FRAME (24) and MAX_NEGATIVE_POINTS_PER_FRAME (8)
+match the backend SAM2 prompt caps in backend/annotation_prompts.py.
+
+Click to add a point. Click near an existing same-type point (within brush
+radius) to remove it.
 
 Strokes are persisted to {clip_root}/annotations.json so they survive
 app restarts.
 
-Brush size: Shift+left-drag up/down.
-Straight line: Alt+left-drag draws a straight line at current brush size.
+Brush size: Shift+left-drag up/down (also controls the proximity toggle radius).
 Undo: Ctrl+Z pops last stroke on the current frame.
 """
 from __future__ import annotations
@@ -27,6 +31,9 @@ from PySide6.QtCore import Qt, QPointF, QRectF
 from PySide6.QtGui import QPainter, QPen, QColor
 
 logger = logging.getLogger(__name__)
+
+MAX_POSITIVE_POINTS_PER_FRAME = 24
+MAX_NEGATIVE_POINTS_PER_FRAME = 8
 
 
 # ── Data Model ──────────────────────────────────────────────────────────────
@@ -75,6 +82,47 @@ class AnnotationModel:
     @property
     def current_stroke(self) -> AnnotationStroke | None:
         return self._current_stroke
+
+    def add_single_point(self, stem_idx: int, x: float, y: float,
+                         brush_type: str, radius: float) -> None:
+        """클릭 한 번을 단일 포인트 stroke로 추가합니다."""
+        stroke = AnnotationStroke(points=[(x, y)], brush_type=brush_type, radius=radius)
+        self._strokes.setdefault(stem_idx, []).append(stroke)
+
+    def count_points(self, stem_idx: int, brush_type: str) -> int:
+        """프레임의 지정 brush_type 포인트 총개수를 반환합니다."""
+        return sum(
+            len(stroke.points)
+            for stroke in self._strokes.get(stem_idx, [])
+            if stroke.brush_type == brush_type
+        )
+
+    def find_nearby_stroke(self, stem_idx: int, x: float, y: float,
+                           brush_type: str, threshold: float) -> int | None:
+        """같은 brush_type의 threshold 이내 포인트가 있는 가장 가까운 stroke 인덱스를
+        반환합니다.
+        """
+        best_idx: int | None = None
+        best_dist = float("inf")
+        for i, stroke in enumerate(self._strokes.get(stem_idx, [])):
+            if stroke.brush_type != brush_type:
+                continue
+            for px, py in stroke.points:
+                dist = ((px - x) ** 2 + (py - y) ** 2) ** 0.5
+                if dist < threshold and dist < best_dist:
+                    best_dist = dist
+                    best_idx = i
+        return best_idx
+
+    def remove_stroke(self, stem_idx: int, stroke_idx: int) -> bool:
+        """지정 인덱스의 stroke를 제거하고 성공 여부를 반환합니다."""
+        strokes = self._strokes.get(stem_idx)
+        if strokes is None or not (0 <= stroke_idx < len(strokes)):
+            return False
+        strokes.pop(stroke_idx)
+        if not strokes:
+            del self._strokes[stem_idx]
+        return True
 
     def undo(self, stem_idx: int) -> bool:
         """Pop the last stroke on a frame. Returns True if a stroke was removed."""
@@ -344,17 +392,24 @@ def paint_annotation_hud(
     image_rect: QRectF,
     brush_type: str,
     radius_image: float,
+    pos_count: int = 0,
+    neg_count: int = 0,
+    cap_warning: bool = False,
 ) -> None:
-    """Draw a persistent HUD describing the exact SAM prompt semantics."""
+    """HUD에 현재 포인트 개수와 제한 경고를 표시합니다."""
     painter.save()
     font = painter.font()
     font.setPointSize(10)
     painter.setFont(font)
 
-    brush_label = "FG" if brush_type == "fg" else "BG"
-    text = f"{brush_label} brush {int(round(radius_image))}px | SAM prompt: sparse points + box"
+    pos_str = f"FG {pos_count}/{MAX_POSITIVE_POINTS_PER_FRAME}"
+    neg_str = f"BG {neg_count}/{MAX_NEGATIVE_POINTS_PER_FRAME}"
+    text = f"{pos_str}  {neg_str}  brush {int(round(radius_image))}px"
     hud_rect = QRectF(image_rect.x() + 12, image_rect.y() + 12, 380, 24)
     painter.fillRect(hud_rect, QColor(0, 0, 0, 150))
-    painter.setPen(_RESIZE_TEXT)
+    if cap_warning:
+        painter.setPen(QColor(255, 80, 80))
+    else:
+        painter.setPen(_RESIZE_TEXT)
     painter.drawText(hud_rect, Qt.AlignCenter, text)
     painter.restore()
