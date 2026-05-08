@@ -11,6 +11,7 @@ Usage:
     python scripts/setup_models.py --gvm               # Optional (~6GB)
     python scripts/setup_models.py --videomama          # Optional (~37GB)
     python scripts/setup_models.py --matanyone2         # Optional (~141MB)
+    python scripts/setup_models.py --resnet18           # Optional (45MB, MatAnyone2 backbone)
     python scripts/setup_models.py --all                # Everything
     python scripts/setup_models.py --check              # Status report
 """
@@ -129,6 +130,14 @@ MATANYONE2_CHECKPOINT = {
     "local_dir": model_paths.get_matanyone2_dir(),
     "size_human": "141 MB",
     "size_bytes": 141_429_115,
+}
+
+RESNET18_CHECKPOINT = {
+    "url": "https://download.pytorch.org/models/resnet18-5c106cde.pth",
+    "filename": "resnet18-5c106cde.pth",
+    "local_dir": model_paths.get_resnet18_dir(),
+    "size_human": "45 MB",
+    "size_bytes": 46_827_520,
 }
 
 RESNET50_CHECKPOINT = {
@@ -429,6 +438,53 @@ def is_matanyone2_installed() -> bool:
     return (MATANYONE2_CHECKPOINT["local_dir"] / MATANYONE2_CHECKPOINT["filename"]).is_file()
 
 
+def is_resnet18_installed() -> bool:
+    """ResNet18 사전학습 체크포인트가 이미 있는지 확인한다."""
+    return (RESNET18_CHECKPOINT["local_dir"] / RESNET18_CHECKPOINT["filename"]).is_file()
+
+
+def download_resnet18() -> bool:
+    """ResNet18 사전학습 체크포인트를 로컬 checkpoints 폴더에 다운로드한다."""
+    cfg = RESNET18_CHECKPOINT
+    local_dir = cfg["local_dir"]
+    local_dir.mkdir(parents=True, exist_ok=True)
+    dest = local_dir / cfg["filename"]
+
+    if dest.is_file():
+        print(f"  [OK] ResNet18 checkpoint already installed")
+        return True
+
+    if not check_disk_space(cfg["size_bytes"], local_dir):
+        usage = shutil.disk_usage(local_dir)
+        free_gb = usage.free / (1024**3)
+        print(f"  [ERROR] Not enough disk space for ResNet18 ({cfg['size_human']})")
+        print(f"  Available: {free_gb:.1f} GB")
+        return False
+
+    print(f"  Downloading ResNet18 checkpoint ({cfg['size_human']})...")
+    tmp_dest = dest.with_suffix(".pth.tmp")
+    try:
+        def _progress(block_num, block_size, total_size):
+            downloaded = block_num * block_size
+            if total_size > 0:
+                pct = min(100, downloaded * 100 // total_size)
+                mb = downloaded / (1024 * 1024)
+                total_mb = total_size / (1024 * 1024)
+                print(f"\r  {mb:.0f}/{total_mb:.0f} MB ({pct}%)", end="", flush=True)
+
+        urllib.request.urlretrieve(cfg["url"], str(tmp_dest), reporthook=_progress)
+        print()
+        tmp_dest.rename(dest)
+        print(f"  Saved to: {dest}")
+        return True
+    except Exception as e:
+        print(f"\n  [ERROR] Download failed: {e}")
+        print(f"  Manual download: {cfg['url']}")
+        print(f"  Place in: {local_dir}/")
+        tmp_dest.unlink(missing_ok=True)
+        return False
+
+
 def is_resnet50_installed() -> bool:
     """ResNet50 사전학습 체크포인트가 이미 있는지 확인한다."""
     return (RESNET50_CHECKPOINT["local_dir"] / RESNET50_CHECKPOINT["filename"]).is_file()
@@ -596,7 +652,12 @@ def check_all():
     ma2_status = "INSTALLED" if ma2_installed else "NOT INSTALLED"
     print(f"  {ma2_mark} matanyone2   {MATANYONE2_CHECKPOINT['size_human']:>8s}  {ma2_status} (optional)")
 
-    # MatAnyone2의 ResNet 백본이 사용하는 ResNet50 사전학습 가중치.
+    # MatAnyone2의 ResNet 백본이 사용하는 사전학습 가중치.
+    resnet18_installed = is_resnet18_installed()
+    resnet18_mark = "[OK]" if resnet18_installed else "[--]"
+    resnet18_status = "INSTALLED" if resnet18_installed else "NOT INSTALLED"
+    print(f"  {resnet18_mark} resnet18     {RESNET18_CHECKPOINT['size_human']:>8s}  {resnet18_status} (optional)")
+
     resnet50_installed = is_resnet50_installed()
     resnet50_mark = "[OK]" if resnet50_installed else "[--]"
     resnet50_status = "INSTALLED" if resnet50_installed else "NOT INSTALLED"
@@ -646,6 +707,11 @@ def main():
     parser.add_argument("--videomama", action="store_true", help="Download VideoMaMa weights (~37GB, optional)")
     parser.add_argument("--matanyone2", action="store_true", help="Download MatAnyone2 weights (~141MB, optional)")
     parser.add_argument(
+        "--resnet18",
+        action="store_true",
+        help="Download ResNet18 pretrained weights (~45MB, optional)",
+    )
+    parser.add_argument(
         "--resnet50",
         action="store_true",
         help="Download ResNet50 pretrained weights (~98MB, optional)",
@@ -666,6 +732,7 @@ def main():
             args.gvm,
             args.videomama,
             args.matanyone2,
+            args.resnet18,
             args.resnet50,
             args.birefnet,
             args.all,
@@ -684,6 +751,7 @@ def main():
                 args.gvm,
                 args.videomama,
                 args.matanyone2,
+                args.resnet18,
                 args.resnet50,
                 args.birefnet,
                 args.all,
@@ -695,12 +763,14 @@ def main():
     sam2_targets: list[str] = []
     download_mlx = False
     download_ma2 = False
+    download_resnet18_ckpt = False
     download_resnet50_ckpt = False
     download_brn = False
     if args.all:
         targets = list(MODELS.keys())
         sam2_targets = list(SAM2_MODELS.keys())
         download_ma2 = True
+        download_resnet18_ckpt = True
         download_brn = True
         # --all on Apple Silicon auto-includes MLX weights
         if sys.platform == "darwin" and platform.machine() == "arm64":
@@ -712,6 +782,8 @@ def main():
             download_mlx = True
         if args.matanyone2:
             download_ma2 = True
+        if args.resnet18:
+            download_resnet18_ckpt = True
         if args.resnet50:
             download_resnet50_ckpt = True
         if args.birefnet:
@@ -726,7 +798,7 @@ def main():
         if args.videomama:
             targets.append("videomama")
 
-    if not any([targets, sam2_targets, download_mlx, download_ma2, download_resnet50_ckpt, download_brn]):
+    if not any([targets, sam2_targets, download_mlx, download_ma2, download_resnet18_ckpt, download_resnet50_ckpt, download_brn]):
         return
 
     total_targets = (
@@ -734,6 +806,7 @@ def main():
         + len(sam2_targets)
         + (1 if download_mlx else 0)
         + (1 if download_ma2 else 0)
+        + (1 if download_resnet18_ckpt else 0)
         + (1 if download_resnet50_ckpt else 0)
         + (1 if download_brn else 0)
     )
@@ -750,6 +823,10 @@ def main():
     if download_ma2:
         print("[matanyone2]")
         results["matanyone2"] = download_matanyone2()
+        print()
+    if download_resnet18_ckpt:
+        print("[resnet18]")
+        results["resnet18"] = download_resnet18()
         print()
     if download_resnet50_ckpt:
         print("[resnet50]")
