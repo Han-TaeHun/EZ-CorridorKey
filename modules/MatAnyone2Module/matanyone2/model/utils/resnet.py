@@ -62,7 +62,7 @@ def _load_resnet50_pretrained_state():
             f"Expected: {checkpoint_path}\n"
             "Run `python -m scripts.setup_models --resnet50` to download."
         )
-    return torch.load(checkpoint_path, map_location='cpu')
+    return torch.load(checkpoint_path, map_location='cpu', weights_only=False)
 
 
 def conv3x3(in_planes, out_planes, stride=1, dilation=1):
