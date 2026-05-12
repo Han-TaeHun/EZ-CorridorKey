@@ -92,3 +92,8 @@ Frame display goes through `ui/preview/display_transform.py` which handles sRGB 
 ### Model weights
 
 Checkpoints are not in the repo. Most tests use random tensors and don't need weights. Tests requiring a GPU or real weights are marked `@pytest.mark.gpu`.
+
+## Workflow
+
+검증(앱 실행, 동작 확인, 테스트 실행)은 사용자가 직접 별도 환경에서 진행한다.
+**코드 작업 완료 후 검증 단계를 수행하거나 안내하지 말 것.**
