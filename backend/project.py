@@ -70,12 +70,11 @@ def get_data_dir() -> str:
             return saved
     except Exception:
         pass
-    # Platform default
-    if sys.platform == "win32":
-        return os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "EZ-CorridorKey")
-    elif sys.platform == "darwin":
+    # app/install_path 미설정 시 exe 옆 디렉터리로 폴백
+    # (setup_wizard._default_install_dir()와 동일 — 체크포인트가 exe 옆에 있음)
+    if sys.platform == "darwin":
         return os.path.join(os.path.expanduser("~"), "Library", "Application Support", "EZ-CorridorKey")
-    return os.path.join(os.path.expanduser("~"), ".local", "share", "EZ-CorridorKey")
+    return exe_dir
 
 
 def get_user_data_root() -> Path:
