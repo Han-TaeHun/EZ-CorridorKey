@@ -52,9 +52,9 @@ model_paths = _load_model_paths_module()
 def _data_root() -> Path:
     """Writable root for model downloads.
 
-    In dev mode: project root (checkpoints live in checkpoints/).
-    In frozen PyInstaller builds: delegates to backend.project.get_data_dir().
-    Falls back to standalone logic when backend is not importable (script run directly).
+    Dev 모드: repo root. Frozen: backend.project.get_data_dir() 위임.
+    ImportError 시(standalone 실행): install_path QSettings 또는 exe 옆.
+    ~/  경로는 사용하지 않는다.
     """
     if not getattr(sys, "frozen", False):
         return _SCRIPT_ROOT
@@ -63,7 +63,7 @@ def _data_root() -> Path:
         return Path(get_data_dir())
     except ImportError:
         pass
-    # Standalone fallback (script run outside frozen app)
+    # Standalone fallback (script run outside frozen app) — ~/  없이 exe 옆으로
     try:
         from PySide6.QtCore import QSettings
         saved = QSettings().value("app/install_path", "", type=str)
@@ -71,12 +71,7 @@ def _data_root() -> Path:
             return Path(saved)
     except Exception:
         pass
-    if sys.platform == "darwin":
-        return Path.home() / "Library" / "Application Support" / "EZ-CorridorKey"
-    elif sys.platform == "win32":
-        return Path(os.environ.get("APPDATA", Path.home())) / "EZ-CorridorKey"
-    else:
-        return Path.home() / ".local" / "share" / "EZ-CorridorKey"
+    return Path(sys.executable).parent
 
 
 SAM2_CACHE_DIR = model_paths.get_sam2_dir()

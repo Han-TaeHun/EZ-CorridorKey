@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -11,14 +10,12 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent
 def get_checkpoints_root() -> Path:
     """Return the root directory for all model checkpoints.
 
-    Dev/source installs use ``<repo>/checkpoints``. Frozen builds use the
-    application data directory selected by ``backend.project.get_data_dir``.
+    ``backend.project.get_data_dir()``를 단일 진입점으로 사용.
+    backend 패키지 전체 임포트가 불가능한 경우(setup_models.py 등 경량 컨텍스트)에는
+    이 파일 위치 기준 repo root로 폴백 — dev 모드에서 결과값이 동일하다.
     """
-    if not getattr(sys, "frozen", False):
-        return _REPO_ROOT / "checkpoints"
     try:
         from backend.project import get_data_dir
-
         return Path(get_data_dir()) / "checkpoints"
     except ImportError:
         return _REPO_ROOT / "checkpoints"
