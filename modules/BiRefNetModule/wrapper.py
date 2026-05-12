@@ -104,6 +104,15 @@ BIREFNET_MODELS: dict[str, str] = {
     "General Legacy": "BiRefNet-legacy",
 }
 
+
+def get_installed_models() -> dict[str, str]:
+    """설치된(로컬에 가중치 파일이 있는) 모델만 반환한다."""
+    return {
+        name: repo
+        for name, repo in BIREFNET_MODELS.items()
+        if _resolve_model_dir(repo)[0] is not None
+    }
+
 DEFAULT_MODEL = "Matting"
 
 # Resolution per model variant

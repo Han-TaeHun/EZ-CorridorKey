@@ -62,13 +62,13 @@ class InferenceParams:
 @dataclass
 class OutputConfig:
     """Which output types to produce and their format."""
-    fg_enabled: bool = True
+    fg_enabled: bool = False
     fg_format: str = "exr"   # "exr" or "png"
     matte_enabled: bool = True
     matte_format: str = "exr"
-    comp_enabled: bool = True
+    comp_enabled: bool = False
     comp_format: str = "png"
-    processed_enabled: bool = True
+    processed_enabled: bool = False
     processed_format: str = "exr"
     exr_compression: str = "dwab"  # "dwab", "piz", "zip", or "none"
 

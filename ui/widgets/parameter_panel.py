@@ -139,9 +139,9 @@ class ParameterPanel(QWidget):
         self._birefnet_model.setMinimumWidth(120)
         self._birefnet_model.setSizeAdjustPolicy(QComboBox.AdjustToContents)
         self._birefnet_model.setToolTip("BiRefNet 모델 변형입니다. 변경 사항은 다음 실행부터 적용됩니다.")
-        # Populate from the wrapper's model registry
-        from modules.BiRefNetModule.wrapper import BIREFNET_MODELS, DEFAULT_MODEL
-        for display_name in BIREFNET_MODELS:
+        # 설치된 모델만 표시
+        from modules.BiRefNetModule.wrapper import get_installed_models, DEFAULT_MODEL
+        for display_name in get_installed_models():
             self._birefnet_model.addItem(display_name)
         # Restore last-used model from QSettings
         from PySide6.QtCore import QSettings
