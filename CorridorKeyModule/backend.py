@@ -121,22 +121,28 @@ def _discover_checkpoint(ext: str) -> Path:
         )
 
     if len(matches) > 1:
-        names = [os.path.basename(f) for f in matches]
-        raise ValueError(f"Multiple {ext} checkpoints in {CHECKPOINT_DIR}: {names}. Keep exactly one.")
+        raise ValueError(f"Multiple {ext} checkpoints found: {matches}. Keep exactly one.")
 
     return Path(matches[0])
 
 
 def _candidate_checkpoint_dirs() -> list[str]:
     dirs = [CHECKPOINT_DIR]
-    if LEGACY_CHECKPOINT_DIR not in dirs:
+    if _checkpoint_dir_key(LEGACY_CHECKPOINT_DIR) not in {_checkpoint_dir_key(d) for d in dirs}:
         dirs.append(LEGACY_CHECKPOINT_DIR)
     return dirs
 
 
+def _checkpoint_dir_key(directory: str) -> str:
+    return os.path.normcase(os.path.abspath(os.path.realpath(directory)))
+
+
 def _checkpoint_matches(ext: str) -> list[str]:
-    matches: list[str] = []
-    for directory in _candidate_checkpoint_dirs():
+    candidate_dirs = _candidate_checkpoint_dirs()
+    matches = glob.glob(os.path.join(candidate_dirs[0], f"*{ext}"))
+    if matches:
+        return matches
+    for directory in candidate_dirs[1:]:
         matches.extend(glob.glob(os.path.join(directory, f"*{ext}")))
     return matches
 
