@@ -26,6 +26,7 @@ import re
 import shutil
 import sys
 from datetime import datetime
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -77,19 +78,24 @@ def get_data_dir() -> str:
     return os.path.join(os.path.expanduser("~"), ".local", "share", "EZ-CorridorKey")
 
 
-def projects_root() -> str:
-    """Return the Projects root directory, creating it if needed.
+def get_user_data_root() -> Path:
+    """사용자 데이터 베이스 경로 (Projects, 최근 세션, QSettings, 로그).
 
-    In dev mode: {repo_root}/Projects/
-    In frozen mode: {install_path}/Projects/ (set via get_data_dir() at startup)
+    - Portable 빌드(frozen + exe 옆 portable.txt): exe 디렉터리
+    - 그 외(dev / installed frozen): ~/EZ_corridorkey
+
+    체크포인트는 이 경로를 사용하지 않음 — get_checkpoints_root() 참고.
     """
-    if _app_dir:
-        root = os.path.join(_app_dir, "Projects")
-    elif getattr(sys, 'frozen', False):
-        root = os.path.join(os.path.dirname(sys.executable), "Projects")
-    else:
-        # Fallback: two levels up from this file (backend/ -> repo root)
-        root = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "Projects")
+    if getattr(sys, 'frozen', False) and os.path.isfile(
+        os.path.join(os.path.dirname(sys.executable), 'portable.txt')
+    ):
+        return Path(sys.executable).parent
+    return Path.home() / "EZ_corridorkey"
+
+
+def projects_root() -> str:
+    """Return the Projects root directory, creating it if needed."""
+    root = str(get_user_data_root() / "Projects")
     os.makedirs(root, exist_ok=True)
     return root
 

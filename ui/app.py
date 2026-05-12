@@ -13,7 +13,7 @@ import logging
 
 from PySide6.QtWidgets import QApplication, QMessageBox, QDialogButtonBox
 from PySide6.QtGui import QFontDatabase, QFont, QIcon
-from PySide6.QtCore import Qt, QObject, QEvent
+from PySide6.QtCore import Qt, QObject, QEvent, QSettings
 
 from ui.theme import load_stylesheet
 
@@ -187,9 +187,12 @@ def create_app(argv: list[str] | None = None) -> QApplication:
     app.setApplicationDisplayName("EZ-CorridorKey")
     app.setOrganizationName("EZSCAPE")
 
-    # One-time migration from old registry path
-    # (Corridor Digital\CorridorKey → EZSCAPE\EZ-CorridorKey)
-    _migrate_legacy_settings()
+    # QSettings를 레지스트리 대신 ~/EZ_corridorkey/EZSCAPE/EZ-CorridorKey.ini 에 저장
+    from backend.project import get_user_data_root
+    ini_root = get_user_data_root()
+    ini_root.mkdir(parents=True, exist_ok=True)
+    QSettings.setDefaultFormat(QSettings.Format.IniFormat)
+    QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(ini_root))
 
     # Keep the Windows Apps & Features version in sync with the bundled build
     # after a skinny update. No-op on non-Windows and in dev mode.

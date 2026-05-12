@@ -110,7 +110,8 @@ def setup_logging(level: str = "INFO") -> None:
     console.setFormatter(logging.Formatter(fmt, datefmt="%H:%M:%S"))
 
     # File handler — session-named log, always DEBUG
-    log_dir = os.path.join(get_app_dir(), "logs", "backend")
+    from backend.project import get_user_data_root
+    log_dir = str(get_user_data_root() / "logs" / "backend")
     os.makedirs(log_dir, exist_ok=True)
 
     session_ts = datetime.now().strftime("%y%m%d_%H%M%S")

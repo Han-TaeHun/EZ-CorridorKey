@@ -1,8 +1,7 @@
 """App-level recent sessions store.
 
 Tracks which workspaces the user has opened, persisted as JSON at
-%APPDATA%/CorridorKey/recent_sessions.json (Windows) or
-~/.config/corridorkey/recent_sessions.json (Linux/macOS).
+~/EZ_corridorkey/config/recent_sessions.json (portable 빌드는 exe 옆 config/).
 
 Independent of per-workspace session sidecars (.corridorkey_session.json).
 """
@@ -11,7 +10,6 @@ from __future__ import annotations
 import json
 import logging
 import os
-import sys
 import time
 from dataclasses import dataclass, asdict
 
@@ -21,18 +19,9 @@ _FILENAME = "recent_sessions.json"
 
 
 def _config_dir() -> str:
-    """Platform-appropriate config directory for app-level settings."""
-    # Portable: config lives next to the exe
-    if getattr(sys, 'frozen', False):
-        exe_dir = os.path.dirname(sys.executable)
-        if os.path.isfile(os.path.join(exe_dir, 'portable.txt')):
-            return os.path.join(exe_dir, 'config')
-    if os.name == "nt":
-        base = os.environ.get("APPDATA", os.path.expanduser("~"))
-        return os.path.join(base, "CorridorKey")
-    # Linux/macOS
-    xdg = os.environ.get("XDG_CONFIG_HOME", os.path.join(os.path.expanduser("~"), ".config"))
-    return os.path.join(xdg, "corridorkey")
+    """최근 세션 파일을 저장할 디렉터리."""
+    from backend.project import get_user_data_root
+    return str(get_user_data_root() / "config")
 
 
 @dataclass
