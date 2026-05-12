@@ -151,6 +151,35 @@ def _configure_runtime_backends() -> None:
         logger.debug(f"OpenCV thread tuning skipped: {exc}")
 
 
+def _migrate_registry_to_ini() -> None:
+    """레지스트리(NativeFormat) → INI 일회성 마이그레이션.
+
+    INI 전환 전에 EZSCAPE/EZ-CorridorKey 및 Corridor Digital/CorridorKey
+    레지스트리 키에 저장됐던 app/install_path 등을 INI 파일로 복사한다.
+    Windows 전용; 다른 플랫폼은 NativeFormat이 plist이므로 무시.
+    """
+    if sys.platform != "win32":
+        return
+    from PySide6.QtCore import QSettings
+    ini = QSettings()  # 현재 INI 포맷
+    if ini.value("_migrated_from_reg", False, type=bool):
+        return
+    for org, app_name in [("EZSCAPE", "EZ-CorridorKey"), ("Corridor Digital", "CorridorKey")]:
+        try:
+            reg = QSettings(
+                QSettings.Format.NativeFormat, QSettings.Scope.UserScope, org, app_name,
+            )
+            keys = reg.allKeys()
+            for key in keys:
+                if not ini.contains(key):
+                    ini.setValue(key, reg.value(key))
+            if keys:
+                logger.info("Registry→INI 마이그레이션: %s/%s에서 %d개 키 복사", org, app_name, len(keys))
+        except Exception as exc:
+            logger.debug("Registry→INI 마이그레이션 스킵 (%s/%s): %s", org, app_name, exc)
+    ini.setValue("_migrated_from_reg", True)
+
+
 def _migrate_legacy_settings() -> None:
     """One-time migration from old QSettings path to new one.
 
@@ -193,6 +222,10 @@ def create_app(argv: list[str] | None = None) -> QApplication:
     ini_root.mkdir(parents=True, exist_ok=True)
     QSettings.setDefaultFormat(QSettings.Format.IniFormat)
     QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(ini_root))
+
+    # 레지스트리 → INI 일회성 마이그레이션 (INI 전환 후 첫 실행 시 수행).
+    # app/install_path 등 기존 레지스트리 값을 INI로 복사한다.
+    _migrate_registry_to_ini()
 
     # Keep the Windows Apps & Features version in sync with the bundled build
     # after a skinny update. No-op on non-Windows and in dev mode.
