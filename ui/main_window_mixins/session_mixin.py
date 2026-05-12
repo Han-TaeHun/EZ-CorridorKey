@@ -19,22 +19,34 @@ _SESSION_VERSION = 1
 class SessionMixin:
     """Session save/load and color-space memory for MainWindow."""
 
+    def _is_project_session_dir(self, dir_path: str | None) -> bool:
+        """세션 파일을 둘 수 있는 프로젝트 폴더인지 확인합니다."""
+        if not dir_path:
+            return False
+
+        try:
+            project_dir = os.path.abspath(dir_path)
+            from backend.project import projects_root as _projects_root
+            if os.path.normcase(project_dir) == os.path.normcase(
+                os.path.abspath(_projects_root())
+            ):
+                return False
+        except Exception:
+            project_dir = os.path.abspath(dir_path)
+
+        return (
+            os.path.isfile(os.path.join(project_dir, "project.json"))
+            or os.path.isdir(os.path.join(project_dir, "clips"))
+        )
+
     def _session_path(self) -> str | None:
         """Return session file path, or None if no clips dir or Projects root.
 
         The Projects root should never have a session file — sessions are
         scoped to individual project folders to prevent cross-contamination.
         """
-        if not self._clips_dir:
+        if not self._is_project_session_dir(self._clips_dir):
             return None
-        from backend.project import projects_root as _projects_root
-        try:
-            if os.path.normcase(os.path.abspath(self._clips_dir)) == os.path.normcase(
-                os.path.abspath(_projects_root())
-            ):
-                return None
-        except Exception:
-            pass
         return os.path.join(self._clips_dir, _SESSION_FILENAME)
 
     def _build_session_data(self) -> dict:
@@ -233,6 +245,8 @@ class SessionMixin:
 
     def _try_auto_load_session(self, clips_dir: str) -> None:
         """Auto-load session if .corridorkey_session.json exists in clips dir."""
+        if not self._is_project_session_dir(clips_dir):
+            return
         path = os.path.join(clips_dir, _SESSION_FILENAME)
         if os.path.isfile(path):
             self._load_session_from(path)

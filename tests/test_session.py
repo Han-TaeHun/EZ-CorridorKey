@@ -1,9 +1,33 @@
 """Tests for session save/load — JSON sidecar, versioning, forward compat."""
 import json
 import os
+from unittest.mock import patch
+
 import pytest
 
 from backend.service import InferenceParams, OutputConfig
+from ui.main_window_mixins.import_mixin import ImportMixin
+from ui.main_window_mixins.session_mixin import _SESSION_FILENAME, SessionMixin
+
+
+class DummyImportWindow(ImportMixin):
+    def __init__(self):
+        self._clips_dir = None
+        self.created_from_folder = []
+
+    def _create_project_from_folder(self, dir_path: str) -> None:
+        self.created_from_folder.append(dir_path)
+
+    def _switch_to_workspace(self) -> None:
+        raise AssertionError("원본 폴더를 직접 작업공간으로 열면 안 됩니다.")
+
+    def _on_clips_dir_changed(self, dir_path: str, **kwargs) -> None:
+        raise AssertionError("원본 폴더를 직접 스캔하면 안 됩니다.")
+
+
+class DummySessionWindow(SessionMixin):
+    def __init__(self, clips_dir: str | None = None):
+        self._clips_dir = clips_dir
 
 
 class TestSessionData:
@@ -78,3 +102,44 @@ class TestSessionData:
         with open(path, 'r') as f:
             loaded = json.load(f)
         assert loaded["test"] is True
+
+
+class TestImportFolderIsolation:
+    def test_welcome_folder_routes_through_project_creation(self):
+        """시작 화면 폴더 선택은 원본을 직접 열지 않고 프로젝트 생성 경로로 보낸다."""
+        window = DummyImportWindow()
+        window._on_welcome_folder(r"C:\source\sequence")
+
+        assert window.created_from_folder == [r"C:\source\sequence"]
+
+    def test_tray_folder_without_open_project_routes_through_project_creation(self):
+        """열린 프로젝트가 없을 때 트레이 폴더 추가도 프로젝트 생성 경로로 보낸다."""
+        window = DummyImportWindow()
+        window._on_tray_folder_imported(r"C:\source\sequence")
+
+        assert window.created_from_folder == [r"C:\source\sequence"]
+
+
+class TestSessionPathIsolation:
+    def test_session_path_only_allows_project_folders(self, tmp_path):
+        """세션 파일은 project.json 또는 clips/가 있는 프로젝트 폴더에만 둔다."""
+        projects_root = tmp_path / "Projects"
+        ordinary_source = tmp_path / "ordinary_source"
+        ordinary_source.mkdir()
+
+        project_with_json = tmp_path / "project_with_json"
+        project_with_json.mkdir()
+        (project_with_json / "project.json").write_text("{}", encoding="utf-8")
+
+        project_with_clips = tmp_path / "project_with_clips"
+        (project_with_clips / "clips").mkdir(parents=True)
+
+        with patch("backend.project.projects_root", return_value=str(projects_root)):
+            assert DummySessionWindow(str(ordinary_source))._session_path() is None
+            assert DummySessionWindow(str(projects_root))._session_path() is None
+            assert DummySessionWindow(str(project_with_json))._session_path() == os.path.join(
+                str(project_with_json), _SESSION_FILENAME
+            )
+            assert DummySessionWindow(str(project_with_clips))._session_path() == os.path.join(
+                str(project_with_clips), _SESSION_FILENAME
+            )

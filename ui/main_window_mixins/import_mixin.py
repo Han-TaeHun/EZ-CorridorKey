@@ -23,8 +23,7 @@ class ImportMixin:
     @Slot(str)
     def _on_welcome_folder(self, dir_path: str) -> None:
         """Handle folder selected from welcome screen."""
-        self._switch_to_workspace()
-        self._on_clips_dir_changed(dir_path)
+        self._create_project_from_folder(dir_path)
 
     @Slot(str)
     def _on_recent_project_opened(self, workspace_path: str) -> None:
@@ -73,7 +72,7 @@ class ImportMixin:
         if self._clips_dir:
             self._add_folder_to_project(dir_path)
         else:
-            self._on_clips_dir_changed(dir_path)
+            self._create_project_from_folder(dir_path)
 
     def _on_tray_files_imported(self, file_paths: list) -> None:
         """Handle files from I/O tray +ADD button — context-aware."""

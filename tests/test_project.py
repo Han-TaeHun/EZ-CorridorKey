@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
+from backend import project_media
 from backend.project import (
     sanitize_stem,
     create_project,
@@ -340,6 +341,34 @@ class TestCreateProject:
             # clip.json records copied=False
             clip_data = read_clip_json(clip_dir)
             assert clip_data["source"]["copied"] is False
+
+
+class TestCreateProjectFromMedia:
+    def test_sequence_project_keeps_source_folder_clean(self, tmp_path):
+        """시퀀스 프로젝트 생성 시 원본 폴더에 project.json/clips를 만들지 않는다."""
+        source_dir = tmp_path / "source_sequence"
+        source_dir.mkdir()
+        for index in range(3):
+            (source_dir / f"frame_{index:04d}.png").write_bytes(b"fake")
+
+        projects_dir = tmp_path / "Projects"
+        with patch("backend.project_media.projects_root", return_value=str(projects_dir)):
+            project_dir = project_media.create_project_from_media(
+                sequence_folders=[str(source_dir)],
+                copy_sequences=False,
+                display_name="source_sequence",
+            )
+
+        assert os.path.commonpath([str(projects_dir), project_dir]) == str(projects_dir)
+        assert os.path.isfile(os.path.join(project_dir, "project.json"))
+        assert os.path.isdir(os.path.join(project_dir, "clips"))
+        assert not os.path.exists(source_dir / "project.json")
+        assert not os.path.exists(source_dir / "clips")
+
+        clip_name = os.listdir(os.path.join(project_dir, "clips"))[0]
+        clip_data = read_clip_json(os.path.join(project_dir, "clips", clip_name))
+        assert clip_data["source"]["original_path"] == os.path.abspath(source_dir)
+        assert clip_data["source"]["copied"] is False
 
 
 class TestAddClipsToProject:
